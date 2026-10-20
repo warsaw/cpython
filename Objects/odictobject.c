@@ -1375,7 +1375,10 @@ OrderedDict_move_to_end_impl(PyODictObject *self, PyObject *key, int last)
 
 /* tp_methods */
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_ordered_dict_pprint, "_ordered_dict_pprint")
+
 static PyMethodDef odict_methods[] = {
+    {"__pprint__", _pprint_bridge_ordered_dict_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
 
     /* overridden dict methods */
     ORDEREDDICT_FROMKEYS_METHODDEF
