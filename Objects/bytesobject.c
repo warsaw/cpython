@@ -2841,8 +2841,12 @@ bytes_getnewargs(PyObject *op, PyObject *Py_UNUSED(dummy))
 }
 
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_bytes, "_bytes_pprint")
+
 static PyMethodDef
 bytes_methods[] = {
+    {"__pprint__", _pprint_bridge_bytes, METH_NOARGS,
+     PyDoc_STR("Describe object for pretty printing.")},
     {"__getnewargs__", bytes_getnewargs,  METH_NOARGS},
     BYTES___BYTES___METHODDEF
     {"capitalize", stringlib_capitalize, METH_NOARGS,

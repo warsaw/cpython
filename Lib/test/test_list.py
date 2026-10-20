@@ -134,7 +134,8 @@ class ListTest(list_tests.CommonTest):
         from _pprint import Layout
 
         values = [1, 2, 3]
-        self.assertEqual(list(values.__pprint__()), [Layout(open='[', close=']'), 1, 2, 3])
+        self.assertEqual(list(values.__pprint__()),
+                         [Layout(open='[', close=']', recursion='[...]'), 1, 2, 3])
 
     def test_repr_large(self):
         # Check the repr of large list objects

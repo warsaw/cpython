@@ -3,6 +3,7 @@
 #include "pycore_dict.h"          // _PyDict_GetItem_KnownHash()
 #include "pycore_long.h"          // _PyLong_GetZero()
 #include "pycore_moduleobject.h"  // _PyModule_GetState()
+#include "pycore_object.h"        // _PyObject_PPRINT_METHOD
 #include "pycore_pyatomic_ft_wrappers.h"
 #include "pycore_typeobject.h"    // _PyType_GetModuleState()
 #include "pycore_weakref.h"       // FT_CLEAR_WEAKREFS()
@@ -1835,7 +1836,11 @@ static PyGetSetDef deque_getset[] = {
 
 static PyObject *deque_iter(PyObject *deque);
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_deque_pprint, "_deque_pprint")
+
 static PyMethodDef deque_methods[] = {
+    {"__pprint__", _pprint_bridge_deque_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     DEQUE_APPEND_METHODDEF
     DEQUE_APPENDLEFT_METHODDEF
     DEQUE_CLEARMETHOD_METHODDEF
@@ -2337,7 +2342,11 @@ PyDoc_STRVAR(defdict_class_getitem_doc,
 of the dictionary's keys and values");
 
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_defaultdict_pprint, "_defaultdict_pprint")
+
 static PyMethodDef defdict_methods[] = {
+    {"__pprint__", _pprint_bridge_defaultdict_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     {"__missing__", defdict_missing, METH_O,
      defdict_missing_doc},
     {"copy", defdict_copy, METH_NOARGS,

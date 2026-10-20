@@ -2,6 +2,7 @@
 
 #include "Python.h"
 #include "pycore_modsupport.h"    // _PyArg_NoPositional()
+#include "pycore_object.h"        // _PyObject_PPRINT_METHOD
 #include "pycore_namespace.h"     // _PyNamespace_Type
 
 /*[clinic input]
@@ -269,7 +270,11 @@ namespace___replace___impl(_PyNamespaceObject *self, PyObject *changes)
 }
 
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_namespace_pprint, "_namespace_pprint")
+
 static PyMethodDef namespace_methods[] = {
+    {"__pprint__", _pprint_bridge_namespace_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     {"__reduce__", namespace_reduce, METH_NOARGS,
      namespace_reduce__doc__},
     NAMESPACE___REPLACE___METHODDEF

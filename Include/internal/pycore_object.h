@@ -44,6 +44,11 @@ extern "C" {
    assert(_PyObject_CheckConsistency(obj, 1)); */
 extern int _PyObject_CheckConsistency(PyObject *op, int check_content);
 
+extern PyObject *_PyObject_CallPprintHelper(PyObject *obj, const char *name);
+#define _PyObject_PPRINT_METHOD(func, helper) \
+    static PyObject *func(PyObject *self, PyObject *Py_UNUSED(ignored)) \
+    { return _PyObject_CallPprintHelper(self, helper); }
+
 extern void _PyDebugAllocatorStats(FILE *out, const char *block_name,
                                    int num_blocks, size_t sizeof_block);
 

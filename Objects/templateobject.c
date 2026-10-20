@@ -1,6 +1,7 @@
 /* t-string Template object implementation */
 
 #include "Python.h"
+#include "pycore_object.h"        // _PyObject_PPRINT_METHOD
 #include "pycore_interpolation.h" // _PyInterpolation_CheckExact()
 #include "pycore_runtime.h"       // _Py_STR()
 #include "pycore_template.h"
@@ -369,7 +370,11 @@ template_reduce(PyObject *op, PyObject *Py_UNUSED(dummy))
     return result;
 }
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_template_pprint, "_template_pprint")
+
 static PyMethodDef template_methods[] = {
+    {"__pprint__", _pprint_bridge_template_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     {"__reduce__", template_reduce, METH_NOARGS, NULL},
     {"__class_getitem__", Py_GenericAlias,
      METH_O|METH_CLASS,

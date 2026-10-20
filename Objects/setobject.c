@@ -2823,7 +2823,11 @@ static PySequenceMethods set_as_sequence = {
 
 /* set object ********************************************************/
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_set_pprint, "_set_pprint")
+
 static PyMethodDef set_methods[] = {
+    {"__pprint__", _pprint_bridge_set_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     SET_ADD_METHODDEF
     SET_CLEAR_METHODDEF
     SET___CONTAINS___METHODDEF
@@ -2937,7 +2941,11 @@ PyTypeObject PySet_Type = {
 /* frozenset object ********************************************************/
 
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_frozen_set_pprint, "_frozen_set_pprint")
+
 static PyMethodDef frozenset_methods[] = {
+    {"__pprint__", _pprint_bridge_frozen_set_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     FROZENSET___CONTAINS___METHODDEF
     FROZENSET_COPY_METHODDEF
     SET_DIFFERENCE_MULTI_METHODDEF

@@ -1174,7 +1174,11 @@ mappingproxy_reversed(PyObject *self, PyObject *Py_UNUSED(ignored))
 /* WARNING: mappingproxy methods must not give access
             to the underlying mapping */
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_mappingproxy_pprint, "_mappingproxy_pprint")
+
 static PyMethodDef mappingproxy_methods[] = {
+    {"__pprint__", _pprint_bridge_mappingproxy_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     {"get",       _PyCFunction_CAST(mappingproxy_get), METH_FASTCALL,
      PyDoc_STR("get($self, key, default=None, /)\n--\n\n"
         "Return the value for key if key is in the mapping, else default.")},

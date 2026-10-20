@@ -3655,18 +3655,7 @@ static PyObject *list_subscript(PyObject*, PyObject*);
 static PyObject *
 list___pprint__(PyObject *self, PyObject *Py_UNUSED(ignored))
 {
-    PyObject *module = PyImport_ImportModule("_pprint");
-    if (module == NULL) {
-        return NULL;
-    }
-    PyObject *helper = PyObject_GetAttrString(module, "_list_pprint");
-    Py_DECREF(module);
-    if (helper == NULL) {
-        return NULL;
-    }
-    PyObject *result = PyObject_CallOneArg(helper, self);
-    Py_DECREF(helper);
-    return result;
+    return _PyObject_CallPprintHelper(self, "_list_pprint");
 }
 
 static PyMethodDef list_methods[] = {

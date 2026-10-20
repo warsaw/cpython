@@ -282,6 +282,10 @@ class OrderedDict(dict):
             return '%s()' % (self.__class__.__name__,)
         return '%s(%r)' % (self.__class__.__name__, dict(self.items()))
 
+    def __pprint__(self):
+        from _pprint import _ordered_dict_pprint
+        return _ordered_dict_pprint(self)
+
     def __reduce__(self):
         'Return state information for pickling'
         state = self.__getstate__()
@@ -758,6 +762,10 @@ class Counter(dict):
             d = dict(self)
         return f'{self.__class__.__name__}({d!r})'
 
+    def __pprint__(self):
+        from _pprint import _counter_pprint
+        return _counter_pprint(self)
+
     # Multiset-style mathematical operations discussed in:
     #       Knuth TAOCP Volume II section 4.6.3 exercise 19
     #       and at http://en.wikipedia.org/wiki/Multiset
@@ -1094,6 +1102,10 @@ class ChainMap(_collections_abc.MutableMapping):
     def __repr__(self):
         return f'{self.__class__.__name__}({", ".join(map(repr, self.maps))})'
 
+    def __pprint__(self):
+        from _pprint import _chainmap_pprint
+        return _chainmap_pprint(self)
+
     @classmethod
     def fromkeys(cls, iterable, value=None, /):
         'Create a new ChainMap with keys from iterable and values set to value.'
@@ -1216,6 +1228,10 @@ class UserDict(_collections_abc.MutableMapping):
     def __repr__(self):
         return repr(self.data)
 
+    def __pprint__(self):
+        from _pprint import _user_container_pprint
+        return _user_container_pprint(self)
+
     def __or__(self, other):
         if isinstance(other, UserDict):
             return self.__class__(self.data | other.data)
@@ -1298,6 +1314,10 @@ class UserList(_collections_abc.MutableSequence):
 
     def __repr__(self):
         return repr(self.data)
+
+    def __pprint__(self):
+        from _pprint import _user_container_pprint
+        return _user_container_pprint(self)
 
     def __lt__(self, other):
         return self.data < self.__cast(other)
@@ -1430,6 +1450,10 @@ class UserString(_collections_abc.Sequence):
 
     def __repr__(self):
         return repr(self.data)
+
+    def __pprint__(self):
+        from _pprint import _user_container_pprint
+        return _user_container_pprint(self)
 
     def __int__(self):
         return int(self.data)

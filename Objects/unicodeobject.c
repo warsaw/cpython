@@ -14127,7 +14127,11 @@ _PyUnicode_Dedent(PyObject *unicode)
     return res;
 }
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_str_pprint, "_str_pprint")
+
 static PyMethodDef unicode_methods[] = {
+    {"__pprint__", _pprint_bridge_str_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     UNICODE_ENCODE_METHODDEF
     UNICODE_REPLACE_METHODDEF
     UNICODE_SPLIT_METHODDEF

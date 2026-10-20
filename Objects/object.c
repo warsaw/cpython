@@ -867,6 +867,23 @@ PyObject_Pretty(PyObject *v, PyObject *printer)
 }
 
 PyObject *
+_PyObject_CallPprintHelper(PyObject *obj, const char *name)
+{
+    PyObject *module = PyImport_ImportModule("_pprint");
+    if (module == NULL) {
+        return NULL;
+    }
+    PyObject *helper = PyObject_GetAttrString(module, name);
+    Py_DECREF(module);
+    if (helper == NULL) {
+        return NULL;
+    }
+    PyObject *result = PyObject_CallOneArg(helper, obj);
+    Py_DECREF(helper);
+    return result;
+}
+
+PyObject *
 PyObject_ASCII(PyObject *v)
 {
     PyObject *repr, *ascii, *res;

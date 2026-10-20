@@ -708,8 +708,8 @@ class DictTest(unittest.TestCase):
 
         values = {1: 2, 3: 4}
         self.assertEqual(list(values.__pprint__()),
-                         [Layout(open='{', close='}', sortable=True), ITEMS,
-                          (1, 2), (3, 4)])
+                         [Layout(open='{', close='}', recursion='{...}', sortable=True),
+                          ITEMS, (1, 2), (3, 4)])
 
     @support.run_with_limited_c_stack()
     @support.skip_wasi_stack_overflow()

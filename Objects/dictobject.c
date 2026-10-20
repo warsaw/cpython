@@ -5256,18 +5256,7 @@ In either case, this is followed by: for k in F:  D[k] = F[k]");
 static PyObject *
 dict___pprint__(PyObject *self, PyObject *Py_UNUSED(ignored))
 {
-    PyObject *module = PyImport_ImportModule("_pprint");
-    if (module == NULL) {
-        return NULL;
-    }
-    PyObject *helper = PyObject_GetAttrString(module, "_dict_pprint");
-    Py_DECREF(module);
-    if (helper == NULL) {
-        return NULL;
-    }
-    PyObject *result = PyObject_CallOneArg(helper, self);
-    Py_DECREF(helper);
-    return result;
+    return _PyObject_CallPprintHelper(self, "_dict_pprint");
 }
 
 /* Forward */
@@ -7021,7 +7010,11 @@ static PyObject* dictkeys_reversed(PyObject *dv, PyObject *Py_UNUSED(ignored));
 PyDoc_STRVAR(reversed_keys_doc,
 "Return a reverse iterator over the dict keys.");
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_dict_view_pprint, "_dict_view_pprint")
+
 static PyMethodDef dictkeys_methods[] = {
+    {"__pprint__", _pprint_bridge_dict_view_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     {"isdisjoint",      dictviews_isdisjoint,           METH_O,
      isdisjoint_doc},
     {"__reversed__",    dictkeys_reversed,              METH_NOARGS,
@@ -7134,6 +7127,8 @@ PyDoc_STRVAR(reversed_items_doc,
 "Return a reverse iterator over the dict items.");
 
 static PyMethodDef dictitems_methods[] = {
+    {"__pprint__", _pprint_bridge_dict_view_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     {"isdisjoint",      dictviews_isdisjoint,           METH_O,
      isdisjoint_doc},
     {"__reversed__",    dictitems_reversed,             METH_NOARGS,
@@ -7226,6 +7221,8 @@ PyDoc_STRVAR(reversed_values_doc,
 "Return a reverse iterator over the dict values.");
 
 static PyMethodDef dictvalues_methods[] = {
+    {"__pprint__", _pprint_bridge_dict_view_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     {"__reversed__",    dictvalues_reversed,            METH_NOARGS,
      reversed_values_doc},
     {NULL,              NULL}           /* sentinel */
@@ -8399,7 +8396,11 @@ static PyMappingMethods frozendict_as_mapping = {
     .mp_subscript = _PyDict_Subscript,
 };
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_frozendict_pprint, "_frozendict_pprint")
+
 static PyMethodDef frozendict_methods[] = {
+    {"__pprint__", _pprint_bridge_frozendict_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     DICT___CONTAINS___METHODDEF
     {"__getitem__", _PyDict_Subscript, METH_O | METH_COEXIST, getitem__doc__},
     DICT___SIZEOF___METHODDEF

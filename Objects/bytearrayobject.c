@@ -2865,7 +2865,11 @@ static PyBufferProcs bytearray_as_buffer = {
     bytearray_releasebuffer,
 };
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_bytearray_pprint, "_bytearray_pprint")
+
 static PyMethodDef bytearray_methods[] = {
+    {"__pprint__", _pprint_bridge_bytearray_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     {"__alloc__", bytearray_alloc, METH_NOARGS, alloc_doc},
     BYTEARRAY_REDUCE_METHODDEF
     BYTEARRAY_REDUCE_EX_METHODDEF

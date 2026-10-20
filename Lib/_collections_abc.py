@@ -839,6 +839,10 @@ class MappingView(Sized):
     def __repr__(self):
         return '{0.__class__.__name__}({0._mapping!r})'.format(self)
 
+    def __pprint__(self):
+        from _pprint import _mapping_view_pprint
+        return _mapping_view_pprint(self)
+
     __class_getitem__ = classmethod(GenericAlias)
 
 

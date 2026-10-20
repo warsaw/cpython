@@ -1,6 +1,7 @@
 /* t-string Interpolation object implementation */
 
 #include "Python.h"
+#include "pycore_object.h"        // _PyObject_PPRINT_METHOD
 #include "pycore_initconfig.h"    // _PyStatus_OK
 #include "pycore_interpolation.h"
 #include "pycore_typeobject.h"    // _PyType_GetDict
@@ -134,7 +135,11 @@ interpolation_reduce(PyObject *op, PyObject *Py_UNUSED(dummy))
                          self->conversion, self->format_spec);
 }
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_interpolation_pprint, "_interpolation_pprint")
+
 static PyMethodDef interpolation_methods[] = {
+    {"__pprint__", _pprint_bridge_interpolation_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     {"__reduce__", interpolation_reduce, METH_NOARGS,
         PyDoc_STR("__reduce__() -> (cls, state)")},
     {"__class_getitem__", Py_GenericAlias,

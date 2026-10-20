@@ -942,7 +942,11 @@ is an int and second element is a string.\n\n\
 Tuples also support the form ``tuple[T, ...]`` to indicate\n\
 an arbitrary length tuple of elements of type T.");
 
+_PyObject_PPRINT_METHOD(_pprint_bridge_tuple_pprint, "_tuple_pprint")
+
 static PyMethodDef tuple_methods[] = {
+    {"__pprint__", _pprint_bridge_tuple_pprint, METH_NOARGS, PyDoc_STR("Describe object for pretty printing.")},
+
     TUPLE___GETNEWARGS___METHODDEF
     TUPLE_INDEX_METHODDEF
     TUPLE_COUNT_METHODDEF
