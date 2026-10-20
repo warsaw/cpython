@@ -1417,10 +1417,55 @@ except Exception:
         self.assertEqual(f'{1.25!s:10.10}', '1.25      ')
         self.assertEqual(f'{1.25!r:10.10}', '1.25      ')
         self.assertEqual(f'{1.25!a:10.10}', '1.25      ')
+        self.assertEqual(f'{1.25!p}', '1.25')
 
         self.assertEqual(f'{"a"}', 'a')
         self.assertEqual(f'{"a"!r}', "'a'")
         self.assertEqual(f'{"a"!a}', "'a'")
+        self.assertEqual(f'{"a"!p}', "'a'")
+        self.assertEqual(f'{"a"!p:}', "'a'")
+        values = [1, 2]
+        self.assertEqual(f'{values!p}', '[1, 2]')
+        mapping = {1: 2, 3: 4}
+        self.assertEqual(f'{mapping!p}', '{1: 2, 3: 4}')
+        wide_mapping = {key: values for key in range(100)}
+        wide_pretty = f'{wide_mapping!p}'
+        self.assertTrue(wide_pretty.startswith('{\n '))
+        self.assertTrue(wide_pretty.endswith('\n}'))
+        self.assertIn(' 0: [1, 2],', wide_pretty)
+
+        class Pretty:
+            def __pprint__(self):
+                return ['line 1', 'line 2']
+
+        pretty = Pretty()
+        self.assertEqual(f'{pretty!p}', "Pretty('line 1', 'line 2')")
+        pretty.__pprint__ = lambda: 'instance attribute'
+        self.assertEqual(f'{pretty!p}', "Pretty('line 1', 'line 2')")
+
+        class StringPretty:
+            def __pprint__(self):
+                return ["I'm C"]
+
+        self.assertEqual(f'{StringPretty()!p}', 'StringPretty("I\'m C")')
+        obj = object()
+        self.assertEqual(f'{obj!p}', repr(obj))
+
+        class BadPretty:
+            def __pprint__(self):
+                return 1
+
+        with self.assertRaises(TypeError):
+            f'{BadPretty()!p}'
+
+        class Printer:
+            def __str__(self):
+                raise AssertionError("printer object was converted to str")
+
+            def __call__(self, obj):
+                return f'printed {obj}'
+
+        self.assertEqual(f'{1!p:{Printer()}}', 'printed 1')
 
         # Conversions can have trailing whitespace after them since it
         # does not provide any significance
@@ -1447,7 +1492,7 @@ except Exception:
         for conv_identifier in 'g', 'A', 'G', 'ä', 'ɐ':
             self.assertAllRaise(SyntaxError,
                                 "f-string: invalid conversion character %r: "
-                                "expected 's', 'r', or 'a'" % conv_identifier,
+                                "expected 's', 'r', 'a', or 'p'" % conv_identifier,
                                 ["f'{3!" + conv_identifier + "}'"])
 
         for conv_non_identifier in '3', '!':
@@ -1463,7 +1508,7 @@ except Exception:
 
         self.assertAllRaise(SyntaxError,
                             "f-string: invalid conversion character 'ss': "
-                            "expected 's', 'r', or 'a'",
+                            "expected 's', 'r', 'a', or 'p'",
                             ["f'{3!ss}'",
                              "f'{3!ss:}'",
                              "f'{3!ss:s}'",

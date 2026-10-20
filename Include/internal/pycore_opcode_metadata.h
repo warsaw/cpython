@@ -200,6 +200,8 @@ int _PyOpcode_num_popped(int opcode, int oparg)  {
             return 1;
         case EXTENDED_ARG:
             return 0;
+        case FORMAT_PRETTY:
+            return 2;
         case FORMAT_SIMPLE:
             return 1;
         case FORMAT_WITH_SPEC:
@@ -695,6 +697,8 @@ int _PyOpcode_num_pushed(int opcode, int oparg)  {
             return 0;
         case EXTENDED_ARG:
             return 0;
+        case FORMAT_PRETTY:
+            return 1;
         case FORMAT_SIMPLE:
             return 1;
         case FORMAT_WITH_SPEC:
@@ -1181,6 +1185,7 @@ const struct opcode_metadata _PyOpcode_opcode_metadata[267] = {
     [ENTER_EXECUTOR] = { true, INSTR_FMT_IB, HAS_ARG_FLAG },
     [EXIT_INIT_CHECK] = { true, INSTR_FMT_IX, HAS_ERROR_FLAG | HAS_ERROR_NO_POP_FLAG | HAS_ESCAPES_FLAG },
     [EXTENDED_ARG] = { true, INSTR_FMT_IB, HAS_ARG_FLAG },
+    [FORMAT_PRETTY] = { true, INSTR_FMT_IB, HAS_ARG_FLAG | HAS_ERROR_FLAG | HAS_ESCAPES_FLAG },
     [FORMAT_SIMPLE] = { true, INSTR_FMT_IX, HAS_ERROR_FLAG | HAS_ESCAPES_FLAG },
     [FORMAT_WITH_SPEC] = { true, INSTR_FMT_IX, HAS_ERROR_FLAG | HAS_ESCAPES_FLAG },
     [FOR_ITER] = { true, INSTR_FMT_IBC, HAS_ARG_FLAG | HAS_JUMP_FLAG | HAS_ERROR_FLAG | HAS_ERROR_NO_POP_FLAG | HAS_ESCAPES_FLAG | HAS_UNPREDICTABLE_JUMP_FLAG | HAS_RECORDS_VALUE_FLAG },
@@ -1428,6 +1433,7 @@ _PyOpcode_macro_expansion[256] = {
     [END_FOR] = { .nuops = 1, .uops = { { _END_FOR, OPARG_SIMPLE, 0 } } },
     [END_SEND] = { .nuops = 1, .uops = { { _END_SEND, OPARG_SIMPLE, 0 } } },
     [EXIT_INIT_CHECK] = { .nuops = 1, .uops = { { _EXIT_INIT_CHECK, OPARG_SIMPLE, 0 } } },
+    [FORMAT_PRETTY] = { .nuops = 1, .uops = { { _FORMAT_PRETTY, OPARG_SIMPLE, 0 } } },
     [FORMAT_SIMPLE] = { .nuops = 1, .uops = { { _FORMAT_SIMPLE, OPARG_SIMPLE, 0 } } },
     [FORMAT_WITH_SPEC] = { .nuops = 1, .uops = { { _FORMAT_WITH_SPEC, OPARG_SIMPLE, 0 } } },
     [FOR_ITER] = { .nuops = 2, .uops = { { _RECORD_NOS_TYPE, OPARG_SIMPLE, 0 }, { _FOR_ITER, OPARG_REPLACED, 0 } } },
@@ -1634,6 +1640,7 @@ const char *_PyOpcode_OpName[267] = {
     [ENTER_EXECUTOR] = "ENTER_EXECUTOR",
     [EXIT_INIT_CHECK] = "EXIT_INIT_CHECK",
     [EXTENDED_ARG] = "EXTENDED_ARG",
+    [FORMAT_PRETTY] = "FORMAT_PRETTY",
     [FORMAT_SIMPLE] = "FORMAT_SIMPLE",
     [FORMAT_WITH_SPEC] = "FORMAT_WITH_SPEC",
     [FOR_ITER] = "FOR_ITER",
@@ -1828,7 +1835,6 @@ const uint8_t _PyOpcode_Caches[256] = {
 PyAPI_DATA(const uint8_t) _PyOpcode_Deopt[256];
 #ifdef NEED_OPCODE_METADATA
 const uint8_t _PyOpcode_Deopt[256] = {
-    [117] = 117,
     [118] = 118,
     [119] = 119,
     [120] = 120,
@@ -1934,6 +1940,7 @@ const uint8_t _PyOpcode_Deopt[256] = {
     [ENTER_EXECUTOR] = ENTER_EXECUTOR,
     [EXIT_INIT_CHECK] = EXIT_INIT_CHECK,
     [EXTENDED_ARG] = EXTENDED_ARG,
+    [FORMAT_PRETTY] = FORMAT_PRETTY,
     [FORMAT_SIMPLE] = FORMAT_SIMPLE,
     [FORMAT_WITH_SPEC] = FORMAT_WITH_SPEC,
     [FOR_ITER] = FOR_ITER,
@@ -2089,7 +2096,6 @@ const uint8_t _PyOpcode_Deopt[256] = {
 #endif // NEED_OPCODE_METADATA
 
 #define EXTRA_CASES \
-    case 117: \
     case 118: \
     case 119: \
     case 120: \

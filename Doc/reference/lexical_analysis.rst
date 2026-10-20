@@ -1145,7 +1145,7 @@ After the expression, replacement fields may optionally contain:
 
 * a *debug specifier* -- an equal sign (``=``), optionally surrounded by
   whitespace on one or both sides;
-* a *conversion specifier* -- ``!s``, ``!r`` or ``!a``; and/or
+* a *conversion specifier* -- ``!s``, ``!r``, ``!a`` or ``!p``; and/or
 * a *format specifier* prefixed with a colon (``:``).
 
 See the :ref:`Standard Library section on f-strings <stdtypes-fstrings>`

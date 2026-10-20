@@ -703,6 +703,14 @@ class DictTest(unittest.TestCase):
         d = {1: BadRepr()}
         self.assertRaises(Exc, repr, d)
 
+    def test_pprint(self):
+        from _pprint import ITEMS, Layout
+
+        values = {1: 2, 3: 4}
+        self.assertEqual(list(values.__pprint__()),
+                         [Layout(open='{', close='}', sortable=True), ITEMS,
+                          (1, 2), (3, 4)])
+
     @support.run_with_limited_c_stack()
     @support.skip_wasi_stack_overflow()
     @support.skip_emscripten_stack_overflow()

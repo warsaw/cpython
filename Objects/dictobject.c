@@ -5253,6 +5253,23 @@ If E is present and has a .keys() method, then does:  for k in E.keys(): D[k] = 
 If E is present and lacks a .keys() method, then does:  for k, v in E: D[k] = v\n\
 In either case, this is followed by: for k in F:  D[k] = F[k]");
 
+static PyObject *
+dict___pprint__(PyObject *self, PyObject *Py_UNUSED(ignored))
+{
+    PyObject *module = PyImport_ImportModule("_pprint");
+    if (module == NULL) {
+        return NULL;
+    }
+    PyObject *helper = PyObject_GetAttrString(module, "_dict_pprint");
+    Py_DECREF(module);
+    if (helper == NULL) {
+        return NULL;
+    }
+    PyObject *result = PyObject_CallOneArg(helper, self);
+    Py_DECREF(helper);
+    return result;
+}
+
 /* Forward */
 
 static PyMethodDef mapp_methods[] = {
@@ -5260,6 +5277,8 @@ static PyMethodDef mapp_methods[] = {
     {"__getitem__",     _PyDict_Subscript,                 METH_O | METH_COEXIST,
      getitem__doc__},
     DICT___SIZEOF___METHODDEF
+    {"__pprint__", dict___pprint__, METH_NOARGS,
+     PyDoc_STR("__pprint__($self, /)\n--\n\nReturn a stream describing the dict.")},
     DICT_GET_METHODDEF
     DICT_SETDEFAULT_METHODDEF
     DICT_POP_METHODDEF

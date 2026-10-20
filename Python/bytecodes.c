@@ -5867,6 +5867,16 @@ dummy_func(
             res = PyStackRef_FromPyObjectSteal(res_o);
         }
 
+        inst(FORMAT_PRETTY, (value, printer -- res)) {
+            assert(oparg <= 1);
+            PyObject *res_o = PyObject_Pretty(
+                PyStackRef_AsPyObjectBorrow(value),
+                oparg ? NULL : PyStackRef_AsPyObjectBorrow(printer));
+            DECREF_INPUTS();
+            ERROR_IF(res_o == NULL);
+            res = PyStackRef_FromPyObjectSteal(res_o);
+        }
+
         pure replicate(1:4) inst(COPY, (bottom, unused[oparg-1] -- bottom, unused[oparg-1], top)) {
             top = PyStackRef_DUP(bottom);
         }

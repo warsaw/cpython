@@ -6238,6 +6238,52 @@
             DISPATCH_GOTO();
         }
 
+        TARGET(FORMAT_PRETTY) {
+            #if _Py_TAIL_CALL_INTERP
+            int opcode = FORMAT_PRETTY;
+            (void)(opcode);
+            #endif
+            frame->instr_ptr = next_instr;
+            next_instr += 1;
+            INSTRUCTION_STATS(FORMAT_PRETTY);
+            _PyStackRef value;
+            _PyStackRef printer;
+            _PyStackRef res;
+            printer = stack_pointer[-1];
+            value = stack_pointer[-2];
+            assert(oparg <= 1);
+            _PyFrame_SetStackPointer(frame, stack_pointer);
+            _PyFrame_StackPointerValidate(frame);
+            PyObject *res_o = PyObject_Pretty(
+                PyStackRef_AsPyObjectBorrow(value),
+                oparg ? NULL : PyStackRef_AsPyObjectBorrow(printer));
+            _PyFrame_StackPointerInvalidate(frame);
+            assert(stack_pointer == _PyFrame_GetStackPointer(frame));
+            _PyFrame_StackPointerValidate(frame);
+            _PyStackRef tmp = printer;
+            printer = PyStackRef_NULL;
+            stack_pointer[-1] = printer;
+            PyStackRef_CLOSE(tmp);
+            _PyFrame_StackPointerInvalidate(frame);
+            assert(stack_pointer == _PyFrame_GetStackPointer(frame));
+            _PyFrame_StackPointerValidate(frame);
+            tmp = value;
+            value = PyStackRef_NULL;
+            stack_pointer[-2] = value;
+            PyStackRef_CLOSE(tmp);
+            _PyFrame_StackPointerInvalidate(frame);
+            stack_pointer += -2;
+            ASSERT_WITHIN_STACK_BOUNDS(__FILE__, __LINE__);
+            if (res_o == NULL) {
+                JUMP_TO_LABEL(error);
+            }
+            res = PyStackRef_FromPyObjectSteal(res_o);
+            stack_pointer[0] = res;
+            stack_pointer += 1;
+            ASSERT_WITHIN_STACK_BOUNDS(__FILE__, __LINE__);
+            DISPATCH();
+        }
+
         TARGET(FORMAT_SIMPLE) {
             #if _Py_TAIL_CALL_INTERP
             int opcode = FORMAT_SIMPLE;

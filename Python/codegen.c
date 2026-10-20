@@ -4362,6 +4362,7 @@ codegen_interpolation(compiler *c, expr_ty e)
         case 's': oparg |= FVC_STR << 2;   break;
         case 'r': oparg |= FVC_REPR << 2;  break;
         case 'a': oparg |= FVC_ASCII << 2; break;
+        case 'p': oparg |= FVC_PRETTY << 2; break;
         default:
             PyErr_Format(PyExc_SystemError,
                      "Unrecognized conversion character %d", conversion);
@@ -4389,6 +4390,63 @@ codegen_formatted_value(compiler *c, expr_ty e)
         case 's': oparg = FVC_STR;   break;
         case 'r': oparg = FVC_REPR;  break;
         case 'a': oparg = FVC_ASCII; break;
+        case 'p':
+            if (e->v.FormattedValue.format_spec) {
+                expr_ty spec = e->v.FormattedValue.format_spec;
+                if (spec->kind == JoinedStr_kind &&
+                    asdl_seq_LEN(spec->v.JoinedStr.values) == 0) {
+                    ADDOP_LOAD_CONST_NEW(c, loc, Py_NewRef(Py_None));
+                    ADDOP_I(c, loc, FORMAT_PRETTY, 1);
+                    return SUCCESS;
+                }
+                else if (spec->kind == JoinedStr_kind &&
+                    asdl_seq_LEN(spec->v.JoinedStr.values) == 1) {
+                    expr_ty part = (expr_ty)asdl_seq_GET(spec->v.JoinedStr.values, 0);
+                    if (part->kind == FormattedValue_kind &&
+                        part->v.FormattedValue.conversion == -1 &&
+                        part->v.FormattedValue.format_spec == NULL) {
+                        VISIT(c, expr, part->v.FormattedValue.value);
+                    }
+                    else if (part->kind == Constant_kind) {
+                        VISIT(c, expr, spec);
+                    }
+                    else {
+                        PyErr_SetString(PyExc_SyntaxError,
+                            "!p format specifier must be a single expression");
+                        return ERROR;
+                    }
+                }
+                else if (spec->kind == JoinedStr_kind) {
+                    bool all_constants = true;
+                    for (Py_ssize_t i = 0; i < asdl_seq_LEN(spec->v.JoinedStr.values); i++) {
+                        expr_ty part = (expr_ty)asdl_seq_GET(spec->v.JoinedStr.values, i);
+                        if (part->kind != Constant_kind) {
+                            all_constants = false;
+                            break;
+                        }
+                    }
+                    if (all_constants) {
+                        VISIT(c, expr, spec);
+                    }
+                    else {
+                        PyErr_SetString(PyExc_SyntaxError,
+                            "!p format specifier must be a single expression");
+                        return ERROR;
+                    }
+                }
+                else {
+                    PyErr_SetString(PyExc_SyntaxError,
+                        "!p format specifier must be a single expression");
+                    return ERROR;
+                }
+            }
+            else {
+                ADDOP_LOAD_CONST_NEW(c, loc, Py_NewRef(Py_None));
+                ADDOP_I(c, loc, FORMAT_PRETTY, 1);
+                return SUCCESS;
+            }
+            ADDOP(c, loc, FORMAT_PRETTY);
+            return SUCCESS;
         default:
             PyErr_Format(PyExc_SystemError,
                      "Unrecognized conversion character %d", conversion);

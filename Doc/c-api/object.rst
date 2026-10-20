@@ -397,6 +397,15 @@ Object Protocol
       This function now includes a debug assertion to help ensure that it
       does not silently discard an active exception.
 
+.. c:function:: PyObject* PyObject_Pretty(PyObject *o, PyObject *printer)
+
+   Return the result of calling *printer* with *o*. If *printer* is ``NULL``,
+   a default printer is created, called with *o*, and discarded. The default
+   printer is implemented in the :mod:`_pprint` module. It calls *o*'s
+   ``__pprint__()`` method if present and interprets the returned stream as a
+   description of the object's layout and contents. If the method is absent,
+   the default printer returns the result of :c:func:`PyObject_Repr`.
+
 
 .. c:function:: PyObject* PyObject_Bytes(PyObject *o)
 

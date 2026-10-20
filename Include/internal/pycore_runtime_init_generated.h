@@ -1480,6 +1480,7 @@ extern "C" {
     INIT_ID(__path__), \
     INIT_ID(__pos__), \
     INIT_ID(__pow__), \
+    INIT_ID(__pprint__), \
     INIT_ID(__prepare__), \
     INIT_ID(__qualname__), \
     INIT_ID(__radd__), \

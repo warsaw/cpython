@@ -193,6 +193,7 @@ _PyStaticObjects_CheckAll(PyInterpreterState *interp) {
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(__path__), "__path__", 8);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(__pos__), "__pos__", 7);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(__pow__), "__pow__", 7);
+    _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(__pprint__), "__pprint__", 10);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(__prepare__), "__prepare__", 11);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(__qualname__), "__qualname__", 12);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(__radd__), "__radd__", 8);

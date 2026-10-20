@@ -371,6 +371,7 @@ const uint32_t _PyUop_Flags[MAX_UOP_ID+1] = {
     [_CONVERT_VALUE] = HAS_ARG_FLAG | HAS_ERROR_FLAG | HAS_ESCAPES_FLAG,
     [_FORMAT_SIMPLE] = HAS_ERROR_FLAG | HAS_ESCAPES_FLAG,
     [_FORMAT_WITH_SPEC] = HAS_ERROR_FLAG | HAS_ESCAPES_FLAG,
+    [_FORMAT_PRETTY] = HAS_ARG_FLAG | HAS_ERROR_FLAG | HAS_ESCAPES_FLAG,
     [_COPY_1] = HAS_PURE_FLAG,
     [_COPY_2] = HAS_PURE_FLAG,
     [_COPY_3] = HAS_PURE_FLAG,
@@ -3471,6 +3472,15 @@ const _PyUopCachingInfo _PyUop_Caching[MAX_UOP_ID+1] = {
             { -1, -1, -1 },
         },
     },
+    [_FORMAT_PRETTY] = {
+        .best = { 2, 2, 2, 2 },
+        .entries = {
+            { -1, -1, -1 },
+            { -1, -1, -1 },
+            { 1, 2, _FORMAT_PRETTY_r21 },
+            { -1, -1, -1 },
+        },
+    },
     [_COPY_1] = {
         .best = { 0, 1, 2, 2 },
         .entries = {
@@ -4670,6 +4680,7 @@ const uint16_t _PyUop_Uncached[MAX_UOP_REGS_ID+1] = {
     [_CONVERT_VALUE_r11] = _CONVERT_VALUE,
     [_FORMAT_SIMPLE_r11] = _FORMAT_SIMPLE,
     [_FORMAT_WITH_SPEC_r21] = _FORMAT_WITH_SPEC,
+    [_FORMAT_PRETTY_r21] = _FORMAT_PRETTY,
     [_COPY_1_r02] = _COPY_1,
     [_COPY_1_r12] = _COPY_1,
     [_COPY_1_r23] = _COPY_1,
@@ -5221,6 +5232,8 @@ const char *const _PyOpcode_uop_name[MAX_UOP_REGS_ID+1] = {
     [_FATAL_ERROR_r11] = "_FATAL_ERROR_r11",
     [_FATAL_ERROR_r22] = "_FATAL_ERROR_r22",
     [_FATAL_ERROR_r33] = "_FATAL_ERROR_r33",
+    [_FORMAT_PRETTY] = "_FORMAT_PRETTY",
+    [_FORMAT_PRETTY_r21] = "_FORMAT_PRETTY_r21",
     [_FORMAT_SIMPLE] = "_FORMAT_SIMPLE",
     [_FORMAT_SIMPLE_r11] = "_FORMAT_SIMPLE_r11",
     [_FORMAT_WITH_SPEC] = "_FORMAT_WITH_SPEC",
@@ -6869,6 +6882,8 @@ int _PyUop_num_popped(int opcode, int oparg)
         case _FORMAT_SIMPLE:
             return 1;
         case _FORMAT_WITH_SPEC:
+            return 2;
+        case _FORMAT_PRETTY:
             return 2;
         case _COPY_1:
             return 0;

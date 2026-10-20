@@ -130,6 +130,12 @@ class ListTest(list_tests.CommonTest):
         mylist = [Obj() for _ in range(5)]
         self.assertEqual(repr(mylist), '[obj, obj, obj]')
 
+    def test_pprint(self):
+        from _pprint import Layout
+
+        values = [1, 2, 3]
+        self.assertEqual(list(values.__pprint__()), [Layout(open='[', close=']'), 1, 2, 3])
+
     def test_repr_large(self):
         # Check the repr of large list objects
         def check(n):

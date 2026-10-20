@@ -205,6 +205,7 @@ struct _Py_global_strings {
         STRUCT_FOR_ID(__path__)
         STRUCT_FOR_ID(__pos__)
         STRUCT_FOR_ID(__pow__)
+        STRUCT_FOR_ID(__pprint__)
         STRUCT_FOR_ID(__prepare__)
         STRUCT_FOR_ID(__qualname__)
         STRUCT_FOR_ID(__radd__)

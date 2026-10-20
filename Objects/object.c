@@ -841,6 +841,32 @@ PyObject_Str(PyObject *v)
 }
 
 PyObject *
+PyObject_Pretty(PyObject *v, PyObject *printer)
+{
+    PyObject *default_printer = NULL;
+    if (printer == NULL) {
+        PyObject *module = PyImport_ImportModule("_pprint");
+        if (module == NULL) {
+            return NULL;
+        }
+        PyObject *printer_class = PyObject_GetAttrString(module, "Printer");
+        Py_DECREF(module);
+        if (printer_class == NULL) {
+            return NULL;
+        }
+        default_printer = PyObject_CallNoArgs(printer_class);
+        Py_DECREF(printer_class);
+        if (default_printer == NULL) {
+            return NULL;
+        }
+        printer = default_printer;
+    }
+    PyObject *result = PyObject_CallOneArg(printer, v);
+    Py_XDECREF(default_printer);
+    return result;
+}
+
+PyObject *
 PyObject_ASCII(PyObject *v)
 {
     PyObject *repr, *ascii, *res;

@@ -3652,11 +3652,30 @@ list___sizeof___impl(PyListObject *self)
 static PyObject *list_iter(PyObject *seq);
 static PyObject *list_subscript(PyObject*, PyObject*);
 
+static PyObject *
+list___pprint__(PyObject *self, PyObject *Py_UNUSED(ignored))
+{
+    PyObject *module = PyImport_ImportModule("_pprint");
+    if (module == NULL) {
+        return NULL;
+    }
+    PyObject *helper = PyObject_GetAttrString(module, "_list_pprint");
+    Py_DECREF(module);
+    if (helper == NULL) {
+        return NULL;
+    }
+    PyObject *result = PyObject_CallOneArg(helper, self);
+    Py_DECREF(helper);
+    return result;
+}
+
 static PyMethodDef list_methods[] = {
     {"__getitem__", list_subscript, METH_O|METH_COEXIST,
      PyDoc_STR("__getitem__($self, index, /)\n--\n\nReturn self[index].")},
     LIST___REVERSED___METHODDEF
     LIST___SIZEOF___METHODDEF
+    {"__pprint__", list___pprint__, METH_NOARGS,
+     PyDoc_STR("__pprint__($self, /)\n--\n\nReturn a stream describing the list.")},
     PY_LIST_CLEAR_METHODDEF
     LIST_COPY_METHODDEF
     LIST_APPEND_METHODDEF
