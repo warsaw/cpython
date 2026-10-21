@@ -390,7 +390,9 @@ class Printer:
 
     def pprint_lines(self, obj):
         """Yield the lines used to pretty-print *obj*."""
-        yield from _render_lines(self._doc(obj, set(), 0), self._width)
+        # Build the complete document before rendering: layout decisions inspect
+        # upcoming nodes to see whether groups fit, and sorting needs all items.
+        yield from _render_lines(self._build_document(obj, set(), 0), self._width)
 
     def _literal_parts(self, parts, level):
         docs = [Text(part) for part in parts]
@@ -408,7 +410,7 @@ class Printer:
             )
         )
 
-    def _string_doc(self, obj, level):
+    def _string_document(self, obj, level):
         if not obj:
             return Text(repr(obj))
         import re
@@ -436,7 +438,7 @@ class Printer:
             return Text(repr(obj))
         return self._literal_parts(chunks, level)
 
-    def _bytes_doc(self, obj, level):
+    def _bytes_document(self, obj, level):
         if len(obj) <= 4:
             return Text(repr(obj))
         width = max(1, self._width - level - self._indent)
@@ -459,16 +461,16 @@ class Printer:
             return doc
         return self._literal_parts(chunks, level)
 
-    def _doc(self, obj, active, level):
+    def _build_document(self, obj, active, level):
         if isinstance(obj, _Literal):
             return Text(obj.text)
         pprint_owner = next(
             (base for base in type(obj).__mro__ if "__pprint__" in vars(base)), None
         )
         if pprint_owner is str and _find_pprint(type(obj)) is not None:
-            return self._string_doc(obj, level)
+            return self._string_document(obj, level)
         if pprint_owner is bytes and _find_pprint(type(obj)) is not None:
-            return self._bytes_doc(obj, level)
+            return self._bytes_document(obj, level)
         header, items = describe(obj)
         if header is None:
             return Text(repr(obj))
@@ -477,7 +479,7 @@ class Printer:
                 return Text("...")
             active.add(id(obj))
             try:
-                return self._doc(items, active, level)
+                return self._build_document(items, active, level)
             finally:
                 active.discard(id(obj))
 
@@ -493,12 +495,12 @@ class Printer:
 
         active.add(id(obj))
         try:
-            parts = [self._item_doc(item, active, level + 1) for item in items]
+            parts = [self._item_document(item, active, level + 1) for item in items]
         finally:
             active.remove(id(obj))
 
         positional = not any(isinstance(item, (Entry, Keyword)) for item in items)
-        return self._container_doc(header, parts, positional, level)
+        return self._container_document(header, parts, positional, level)
 
     def _sorted(self, items, active, level):
         if not any(isinstance(_natural_key(item), Set) for item in items):
@@ -509,21 +511,23 @@ class Printer:
         return sorted(items, key=lambda item: self._flat(_natural_key(item), active, level + 1))
 
     def _flat(self, obj, active, level):
-        return _render(Group(self._doc(obj, active, level)), sys.maxsize)
+        return _render(Group(self._build_document(obj, active, level)), sys.maxsize)
 
-    def _item_doc(self, item, active, level):
+    def _item_document(self, item, active, level):
         match item:
             case Entry(key=key, value=value):
                 hang = self._indent if self._expand is Expand.NEVER else None
                 return KeyValue(
-                    self._doc(key, active, level), self._doc(value, active, level), hang
+                    self._build_document(key, active, level),
+                    self._build_document(value, active, level),
+                    hang,
                 )
             case Keyword(name=name, value=value):
-                return Concat((Text(f"{name}="), self._doc(value, active, level)))
+                return Concat((Text(f"{name}="), self._build_document(value, active, level)))
             case _:
-                return self._doc(item, active, level)
+                return self._build_document(item, active, level)
 
-    def _container_doc(self, header, parts, positional, level):
+    def _container_document(self, header, parts, positional, level):
         close = header.single_close if len(parts) == 1 else header.close
         separator = Text(header.sep)
 
