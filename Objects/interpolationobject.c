@@ -203,21 +203,21 @@ _PyInterpolation_Build(PyObject *value, PyObject *str, int conversion, PyObject 
     interpolation->format_spec = Py_NewRef(format_spec);
     interpolation->conversion = NULL;
 
-    if (conversion == 0) {
+    if (conversion == _Py_TSTRING_CONVERSION_NONE) {
         interpolation->conversion = Py_None;
     }
     else {
         switch (conversion) {
-            case FVC_ASCII:
+            case _Py_TSTRING_CONVERSION_ASCII:
                 interpolation->conversion = _Py_LATIN1_CHR('a');
                 break;
-            case FVC_REPR:
+            case _Py_TSTRING_CONVERSION_REPR:
                 interpolation->conversion = _Py_LATIN1_CHR('r');
                 break;
-            case FVC_STR:
+            case _Py_TSTRING_CONVERSION_STR:
                 interpolation->conversion = _Py_LATIN1_CHR('s');
                 break;
-            case FVC_PRETTY:
+            case _Py_TSTRING_CONVERSION_PRETTY:
                 interpolation->conversion = _Py_LATIN1_CHR('p');
                 break;
             default:

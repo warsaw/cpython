@@ -774,6 +774,8 @@ do_conversion(PyObject *obj, Py_UCS4 conversion)
         return PyObject_Str(obj);
     case 'a':
         return PyObject_ASCII(obj);
+    case 'p':
+        return PyObject_Pretty(obj, NULL);
     default:
         if (conversion > 32 && conversion < 127) {
                 /* It's the ASCII subrange; casting to char is safe

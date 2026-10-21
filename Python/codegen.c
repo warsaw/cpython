@@ -30,6 +30,7 @@
 #include "pycore_unicodeobject.h" // _PyUnicode_EqualToASCIIString
 #include "pycore_ceval.h"         // SPECIAL___ENTER__
 #include "pycore_template.h"      // _PyTemplate_Type
+#include "pycore_interpolation.h" // _PyInterpolation_Type, _Py_TSTRING_CONVERSION_*
 
 #define NEED_OPCODE_METADATA
 #include "pycore_opcode_metadata.h" // _PyOpcode_opcode_metadata, _PyOpcode_num_popped/pushed
@@ -4350,6 +4351,8 @@ codegen_interpolation(compiler *c, expr_ty e)
     VISIT(c, expr, e->v.Interpolation.value);
     ADDOP_LOAD_CONST(c, loc, e->v.Interpolation.str);
 
+    /* BUILD_INTERPOLATION encodes the stack input count (2 or 3) in the low
+       two bits and the conversion code in the next three bits. */
     int oparg = 2;
     if (e->v.Interpolation.format_spec) {
         oparg++;
@@ -4359,10 +4362,10 @@ codegen_interpolation(compiler *c, expr_ty e)
     int conversion = e->v.Interpolation.conversion;
     if (conversion != -1) {
         switch (conversion) {
-        case 's': oparg |= FVC_STR << 2;   break;
-        case 'r': oparg |= FVC_REPR << 2;  break;
-        case 'a': oparg |= FVC_ASCII << 2; break;
-        case 'p': oparg |= FVC_PRETTY << 2; break;
+        case 's': oparg |= _Py_TSTRING_CONVERSION_STR << 2;    break;
+        case 'r': oparg |= _Py_TSTRING_CONVERSION_REPR << 2;   break;
+        case 'a': oparg |= _Py_TSTRING_CONVERSION_ASCII << 2;  break;
+        case 'p': oparg |= _Py_TSTRING_CONVERSION_PRETTY << 2; break;
         default:
             PyErr_Format(PyExc_SystemError,
                      "Unrecognized conversion character %d", conversion);

@@ -11,6 +11,13 @@ extern "C" {
 
 extern PyTypeObject _PyInterpolation_Type;
 
+/* Conversion codes encoded in BUILD_INTERPOLATION's oparg. */
+#define _Py_TSTRING_CONVERSION_NONE   0
+#define _Py_TSTRING_CONVERSION_STR    1
+#define _Py_TSTRING_CONVERSION_REPR   2
+#define _Py_TSTRING_CONVERSION_ASCII  3
+#define _Py_TSTRING_CONVERSION_PRETTY 4
+
 #define _PyInterpolation_CheckExact(op) Py_IS_TYPE((op), &_PyInterpolation_Type)
 
 PyAPI_FUNC(PyObject *) _PyInterpolation_Build(PyObject *value, PyObject *str,

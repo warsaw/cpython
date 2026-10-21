@@ -1261,7 +1261,7 @@ class StrTest(string_tests.StringLikeTest,
         # format specifiers for user defined type
         self.assertEqual('{0:abc}'.format(C()), 'abc')
 
-        # !r, !s and !a coercions
+        # !r, !s, !a and !p coercions
         self.assertEqual('{0!s}'.format('Hello'), 'Hello')
         self.assertEqual('{0!s:}'.format('Hello'), 'Hello')
         self.assertEqual('{0!s:15}'.format('Hello'), 'Hello          ')
@@ -1278,6 +1278,14 @@ class StrTest(string_tests.StringLikeTest,
         self.assertEqual('{0!a:}'.format('Hello'), "'Hello'")
         self.assertEqual('{0!a}'.format(F('Hello')), 'F(Hello)')
         self.assertEqual('{0!a}'.format(F('\u0374')), 'F(\\u0374)')
+        self.assertEqual('{0!p}'.format([1, 2]), '[1, 2]')
+        self.assertEqual('{0!p:}'.format([1, 2]), '[1, 2]')
+
+        class Pretty:
+            def __pprint__(self):
+                return ["line 1", "line 2"]
+
+        self.assertEqual('{0!p}'.format(Pretty()), "Pretty('line 1', 'line 2')")
 
         # test fallback to object.__format__
         self.assertEqual('{0}'.format({}), '{}')

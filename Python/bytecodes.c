@@ -2428,6 +2428,8 @@ dummy_func(
         }
 
         inst(BUILD_INTERPOLATION, (value, str, format[oparg & 1] -- interpolation)) {
+            /* The low two bits encode the stack input count; the next three
+               bits encode the conversion. */
             PyObject *value_o = PyStackRef_AsPyObjectBorrow(value);
             PyObject *str_o = PyStackRef_AsPyObjectBorrow(str);
             int conversion = oparg >> 2;

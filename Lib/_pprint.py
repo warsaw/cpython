@@ -386,7 +386,11 @@ class Printer:
         self._expand = expand
 
     def __call__(self, obj):
-        return _render(self._doc(obj, set(), 0), self._width)
+        return NL.join(self.pprint_lines(obj))
+
+    def pprint_lines(self, obj):
+        """Yield the lines used to pretty-print *obj*."""
+        yield from _render_lines(self._doc(obj, set(), 0), self._width)
 
     def _literal_parts(self, parts, level):
         docs = [Text(part) for part in parts]
@@ -545,6 +549,10 @@ class Printer:
 
 
 def _render(doc, width):
+    return NL.join(_render_lines(doc, width))
+
+
+def _render_lines(doc, width):
     out = []
     column = 0
     stack = [(0, False, doc)]
@@ -552,14 +560,21 @@ def _render(doc, width):
         indent, flat, node = stack.pop()
         match node:
             case Text(text=text):
-                out.append(text)
-                column += len(text)
+                parts = text.split(NL)
+                for part in parts[:-1]:
+                    out.append(part)
+                    yield EMPTY.join(out)
+                    out.clear()
+                out.append(parts[-1])
+                column = len(parts[-1]) if len(parts) > 1 else column + len(text)
             case Line(flat=flat_text):
                 if flat:
                     out.append(flat_text)
                     column += len(flat_text)
                 else:
-                    out.append(NL + SPACE * indent)
+                    yield EMPTY.join(out)
+                    out.clear()
+                    out.append(SPACE * indent)
                     column = indent
             case Concat(parts=parts):
                 stack.extend((indent, flat, part) for part in reversed(parts))
@@ -591,7 +606,7 @@ def _render(doc, width):
                     stack.append((hanging, False, Line()))
                     stack.append((indent, False, Text(":")))
                     stack.append((indent, False, key))
-    return EMPTY.join(out)
+    yield EMPTY.join(out)
 
 
 def _fits(remaining, first, rest):
