@@ -921,6 +921,15 @@ def _set_new_attribute(cls, name, value):
     return False
 
 
+def _dataclass_pprint(obj, field_names):
+    from _pprint import KWARGS, Layout
+
+    yield Layout(name=obj.__class__.__qualname__)
+    yield KWARGS
+    for name in field_names:
+        yield name, getattr(obj, name)
+
+
 # Decide if/how we're going to create a hash function.  Key is
 # (unsafe_hash, eq, frozen, does-hash-exist).  Value is the action to
 # take.  The common case is to do nothing, so instead of providing a
@@ -1179,6 +1188,13 @@ def _process_class(cls, init, repr, eq, order, unsafe_hash, frozen,
                                         for f in flds]) + ')"'],
                             locals={'__dataclasses_recursive_repr': recursive_repr},
                             decorator="@__dataclasses_recursive_repr()")
+
+        if '__pprint__' not in cls.__dict__:
+            field_names = tuple(f.name for f in flds)
+            func_builder.add_fn('__pprint__',
+                                ('self',),
+                                [f'  return __dataclasses_pprint(self, {field_names!r})'],
+                                locals={'__dataclasses_pprint': _dataclass_pprint})
 
     if eq:
         # Create __eq__ method.  There's no need for a __ne__ method,

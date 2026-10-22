@@ -2695,6 +2695,37 @@ class TestRepr(unittest.TestCase):
         self.assertEqual(repr(C.D(0)), 'TestRepr.test_repr.<locals>.C.D(i=0)')
         self.assertEqual(repr(C.E()), 'TestRepr.test_repr.<locals>.C.E()')
 
+    def test_pprint(self):
+        from _pprint import Printer
+
+        @dataclass
+        class C:
+            visible: int
+            also_visible: str
+            hidden: object = field(repr=False)
+
+        obj = C(1, 'value', object())
+        self.assertIn('__pprint__', C.__dict__)
+        self.assertEqual(Printer()(obj), f"{C.__qualname__}(visible=1, also_visible='value')")
+
+    def test_pprint_not_generated_if_defined(self):
+        def custom_pprint(self):
+            return iter(())
+
+        @dataclass
+        class C:
+            value: int
+            __pprint__ = custom_pprint
+
+        self.assertIs(C.__dict__['__pprint__'], custom_pprint)
+
+    def test_pprint_not_generated_if_repr_false(self):
+        @dataclass(repr=False)
+        class C:
+            value: int
+
+        self.assertNotIn('__pprint__', C.__dict__)
+
     def test_no_repr(self):
         # Test a class with no __repr__ and repr=False.
         @dataclass(repr=False)
