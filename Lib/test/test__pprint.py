@@ -2,7 +2,7 @@ import collections
 import types
 import unittest
 
-from _pprint import Printer, describe
+from _pprint import Printer, decompose
 
 
 class PprintProtocolTests(unittest.TestCase):
@@ -42,7 +42,7 @@ class PprintProtocolTests(unittest.TestCase):
         for obj in objects:
             with self.subTest(type=type(obj).__name__):
                 self.assertTrue(callable(getattr(type(obj), "__pprint__", None)))
-                self.assertIsNotNone(describe(obj)[0])
+                self.assertIsNotNone(decompose(obj)[0])
                 self.assertIsInstance(Printer()(obj), str)
 
     def test_string_and_bytes_wrap(self):
@@ -53,7 +53,7 @@ class PprintProtocolTests(unittest.TestCase):
     def test_printer_lines(self):
         printer = Printer(width=20)
         obj = {"first": [1, 2, 3], "second": [4, 5, 6]}
-        lines = printer.pprint_lines(obj)
+        lines = printer.formatted_lines(obj)
         self.assertEqual("\n".join(lines), printer(obj))
 
 

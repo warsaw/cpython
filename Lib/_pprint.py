@@ -6,6 +6,8 @@ document into layout instructions using its formatting options, and the
 renderer chooses line breaks to produce the output. Layout instructions are an
 intermediate tree of text, indentation, grouping, and possible line breaks;
 the renderer resolves them into output lines.
+
+It also includes __pprint__ for built in types.
 """
 
 import enum
@@ -20,10 +22,9 @@ from string.templatelib import Interpolation as _Interpolation
 from string.templatelib import Template as _Template
 
 
-COMMA_SPACE = ", "
-EMPTY = ""
-NL = "\n"
-SPACE = " "
+_EMPTY = ""
+_NL = "\n"
+_SPACE = " "
 
 VALUES = sentinel("VALUES", repr="pprint.VALUES")
 KWARGS = sentinel("KWARGS", repr="pprint.KWARGS")
@@ -66,6 +67,20 @@ class Entry:
 
     key: object
     value: object
+
+
+@dataclass(frozen=True)
+class BreakableString:
+    """A string value that printers may split across output lines."""
+
+    value: str
+
+
+@dataclass(frozen=True)
+class BreakableBytes:
+    """A bytes value that printers may split across output lines."""
+
+    value: bytes
 
 
 class _ComparisonError:
@@ -150,7 +165,7 @@ def decompose(obj):
             open_, close = f"{name}(", ")"
     else:
         open_ = layout.open
-        close = EMPTY if layout.close is None else layout.close
+        close = _EMPTY if layout.close is None else layout.close
 
     filled = Layout(
         name=name,
@@ -168,6 +183,16 @@ def decompose(obj):
 @dataclass(frozen=True)
 class _ValueDocument:
     value: object
+
+
+@dataclass(frozen=True)
+class _BreakableStringDocument:
+    value: str
+
+
+@dataclass(frozen=True)
+class _BreakableBytesDocument:
+    value: bytes
 
 
 @dataclass(frozen=True)
@@ -206,17 +231,17 @@ class _ContainerDocument:
 def _build_document(obj, ancestors=()):
     """Build a printer-independent document node for *obj*.
 
-    Child descriptions are deferred until needed by the printer.
+    Nested objects' descriptions are read when layout conversion reaches them.
     """
     ancestor_ids = {id(ancestor) for ancestor in ancestors}
-    if isinstance(obj, _Literal):
-        return _TextDocument(obj.text, obj)
 
-    pprint_owner = next(
-        (base for base in type(obj).__mro__ if "__pprint__" in vars(base)), None
-    )
-    if pprint_owner in (str, bytes) and _find_pprint(type(obj)) is not None:
-        return _ValueDocument(obj)
+    # Breakable values are protocol instructions, not objects to
+    # decompose, so they need special handling.
+    match obj:
+        case BreakableString(value=value):
+            return _BreakableStringDocument(value)
+        case BreakableBytes(value=value):
+            return _BreakableBytesDocument(value)
 
     header, items = decompose(obj)
     if header is None:
@@ -258,53 +283,53 @@ def _build_document(obj, ancestors=()):
 # A layout document is a tree of text and layout instructions. It represents
 # the output before line breaks are chosen; the renderer turns it into lines.
 @dataclass(frozen=True)
-class Text:
+class _Text:
     text: str
 
 
 @dataclass(frozen=True)
-class Line:
+class _Line:
     """Flat text when a group fits, or a line break otherwise."""
 
-    flat: str = SPACE
+    flat: str = _SPACE
 
 
 @dataclass(frozen=True)
-class Concat:
+class _Concat:
     parts: tuple
 
 
 @dataclass(frozen=True)
-class Nest:
+class _Nest:
     width: int
     doc: object
 
 
 @dataclass(frozen=True)
-class Align:
+class _Align:
     doc: object
 
 
 @dataclass(frozen=True)
-class Group:
+class _Group:
     doc: object
 
 
 @dataclass(frozen=True)
-class IfBroken:
+class _IfBroken:
     broken: str
-    flat: str = EMPTY
+    flat: str = _EMPTY
 
 
 @dataclass(frozen=True)
-class KeyValue:
+class _KeyValue:
     key: object
     value: object
     hang: int | None
 
 
-SOFTLINE = Line(EMPTY)
-COLON_SPACE = Text(": ")
+_SOFTLINE = _Line(_EMPTY)
+_COLON_SPACE = _Text(": ")
 
 
 def _join(separator, docs):
@@ -313,7 +338,7 @@ def _join(separator, docs):
         if index:
             parts.append(separator)
         parts.append(doc)
-    return Concat(tuple(parts))
+    return _Concat(tuple(parts))
 
 
 class Expand(enum.Enum):
@@ -355,7 +380,7 @@ class Printer:
         )
 
     def __call__(self, obj):
-        return NL.join(self.formatted_lines(obj))
+        return _NL.join(self.formatted_lines(obj))
 
     def formatted_lines(self, obj):
         """Yield the formatted lines for *obj*."""
@@ -366,17 +391,17 @@ class Printer:
 
 
 def _literal_parts(parts, indent):
-    docs = [Text(part) for part in parts]
+    docs = [_Text(part) for part in parts]
     if len(docs) == 1:
         return docs[0]
-    body = _join(Line(), docs)
-    return Group(
-        Concat(
+    body = _join(_Line(), docs)
+    return _Group(
+        _Concat(
             (
-                Text("("),
-                Nest(indent, Concat((SOFTLINE, body))),
-                SOFTLINE,
-                Text(")"),
+                _Text("("),
+                _Nest(indent, _Concat((_SOFTLINE, body))),
+                _SOFTLINE,
+                _Text(")"),
             )
         )
     )
@@ -384,7 +409,7 @@ def _literal_parts(parts, indent):
 
 def _string_document(obj, level, width, indent):
     if not obj:
-        return Text(repr(obj))
+        return _Text(repr(obj))
     import re
 
     width = max(1, width - level - indent)
@@ -407,13 +432,13 @@ def _string_document(obj, level, width, indent):
         if current:
             chunks.append(repr(current))
     if len(chunks) <= 1:
-        return Text(repr(obj))
+        return _Text(repr(obj))
     return _literal_parts(chunks, indent)
 
 
 def _bytes_document(obj, level, width, indent):
     if len(obj) <= 4:
-        return Text(repr(obj))
+        return _Text(repr(obj))
     width = max(1, width - level - indent)
     chunks = []
     current = b""
@@ -428,9 +453,9 @@ def _bytes_document(obj, level, width, indent):
     if current:
         chunks.append(repr(current))
     if len(chunks) == 1:
-        doc = Text(repr(obj))
+        doc = _Text(repr(obj))
         if level == 0:
-            return Concat((Text("("), doc, Text(")")))
+            return _Concat((_Text("("), doc, _Text(")")))
         return doc
     return _literal_parts(chunks, indent)
 
@@ -443,21 +468,18 @@ def _layout_document(document, level, options):
                 _build_document(value, ancestors), level, options
             )
         case _TextDocument(text=text):
-            return Text(text)
+            return _Text(text)
+        case _BreakableStringDocument(value=value):
+            return _string_document(value, level, options.width, options.indent)
+        case _BreakableBytesDocument(value=value):
+            return _bytes_document(value, level, options.width, options.indent)
         case _ValueDocument(value=value):
-            pprint_owner = next(
-                (base for base in type(value).__mro__ if "__pprint__" in vars(base)), None
-            )
-            if pprint_owner is str and _find_pprint(type(value)) is not None:
-                return _string_document(value, level, options.width, options.indent)
-            if pprint_owner is bytes and _find_pprint(type(value)) is not None:
-                return _bytes_document(value, level, options.width, options.indent)
-            return Text(repr(value))
+            return _Text(repr(value))
         case _ContainerDocument(layout=header, items=items):
             if not items:
-                return Text(header.empty)
+                return _Text(header.empty)
             if options.depth is not None and level >= options.depth:
-                return Text(f"{header.open}...{header.close}")
+                return _Text(f"{header.open}...{header.close}")
 
             if header.sortable and options.sort_dicts:
                 items = _sorted_documents(items, level, options)
@@ -474,6 +496,10 @@ def _document_source(document):
     match document:
         case _ValueDocument(value=value):
             return value
+        case _BreakableStringDocument(value=value):
+            return value
+        case _BreakableBytesDocument(value=value):
+            return value
         case _ContainerDocument(source=value):
             return value
         case _LazyDocument(value=value):
@@ -484,46 +510,49 @@ def _document_source(document):
             return value
         case _TextDocument(source=value):
             return value
+        case _:
+            raise TypeError(f"unexpected structural document: {document!r}")
 
 
-def _natural_document(item):
+def _document_sort_key(item):
+    """Return an entry's key, or the item itself, for sorting."""
     return item.key if isinstance(item, _EntryDocument) else item
 
 
 def _sorted_documents(items, level, options):
     if not any(
-        isinstance(_document_source(_natural_document(item)), Set) for item in items
+        isinstance(_document_source(_document_sort_key(item)), Set) for item in items
     ):
         try:
             return sorted(
                 items,
-                key=lambda item: _document_source(_natural_document(item)),
+                key=lambda item: _document_source(_document_sort_key(item)),
             )
         except TypeError:
             pass
     return sorted(
         items,
-        key=lambda item: _flat_document(_natural_document(item), level + 1, options),
+        key=lambda item: _flat_document(_document_sort_key(item), level + 1, options),
     )
 
 
 def _flat_document(document, level, options):
     layout_document = _layout_document(document, level, options)
-    return NL.join(_render_lines(Group(layout_document), sys.maxsize))
+    return _NL.join(_render_lines(_Group(layout_document), sys.maxsize))
 
 
 def _item_document(item, level, options):
     match item:
         case _EntryDocument(key=key, value=value):
             hang = options.indent if options.expand is Expand.NEVER else None
-            return KeyValue(
+            return _KeyValue(
                 _layout_document(key, level, options),
                 _layout_document(value, level, options),
                 hang,
             )
         case _KeywordDocument(name=name, value=value):
-            return Concat(
-                (Text(f"{name}="), _layout_document(value, level, options))
+            return _Concat(
+                (_Text(f"{name}="), _layout_document(value, level, options))
             )
         case _:
             return _layout_document(item, level, options)
@@ -531,84 +560,89 @@ def _item_document(item, level, options):
 
 def _container_document(header, parts, positional, level, options):
     close = header.single_close if len(parts) == 1 else header.close
-    separator = Text(header.sep)
+    separator = _Text(header.sep)
 
     if options.expand is Expand.NEVER:
         if options.compact and positional:
-            body = _join(Concat((separator, Group(Line()))), parts)
-            return Concat((Text(header.open), Align(body), Text(close)))
-        body = _join(Concat((separator, Line())), parts)
-        return Group(Concat((Text(header.open), Align(body), Text(close))))
+            body = _join(_Concat((separator, _Group(_Line()))), parts)
+            return _Concat((_Text(header.open), _Align(body), _Text(close)))
+        body = _join(_Concat((separator, _Line())), parts)
+        return _Group(_Concat((_Text(header.open), _Align(body), _Text(close))))
 
-    body = _join(Concat((separator, Line())), parts)
-    doc = Concat(
+    body = _join(_Concat((separator, _Line())), parts)
+    doc = _Concat(
         (
-            Text(header.open),
-            Nest(options.indent, Concat((SOFTLINE, body, IfBroken(header.sep)))),
-            SOFTLINE,
-            IfBroken(header.close, flat=close),
+            _Text(header.open),
+            _Nest(options.indent, _Concat((_SOFTLINE, body, _IfBroken(header.sep)))),
+            _SOFTLINE,
+            _IfBroken(header.close, flat=close),
         )
     )
     if options.expand is Expand.ALWAYS and level > 0:
         return doc
-    return Group(doc)
+    return _Group(doc)
 
 
 def _render_lines(doc, width):
     out = []
     column = 0
+    # Each pending item is (indent, flat, node): nodes come from the layout
+    # document, while indent and flat carry the rendering context. Compound
+    # nodes add their children to this stack as they are traversed. The stack
+    # can grow to O(N), where N is the number of layout nodes: a deep document
+    # leaves pending nodes at each level, while a wide _Concat adds many at once.
     stack = [(0, False, doc)]
     while stack:
         indent, flat, node = stack.pop()
         match node:
-            case Text(text=text):
-                parts = text.split(NL)
+            case _Text(text=text):
+                parts = text.split(_NL)
                 for part in parts[:-1]:
                     out.append(part)
-                    yield EMPTY.join(out)
+                    yield _EMPTY.join(out)
                     out.clear()
                 out.append(parts[-1])
                 column = len(parts[-1]) if len(parts) > 1 else column + len(text)
-            case Line(flat=flat_text):
+            case _Line(flat=flat_text):
                 if flat:
                     out.append(flat_text)
                     column += len(flat_text)
                 else:
-                    yield EMPTY.join(out)
+                    yield _EMPTY.join(out)
                     out.clear()
-                    out.append(SPACE * indent)
+                    out.append(_SPACE * indent)
                     column = indent
-            case Concat(parts=parts):
+            case _Concat(parts=parts):
                 stack.extend((indent, flat, part) for part in reversed(parts))
-            case Nest(width=extra, doc=inner):
+            case _Nest(width=extra, doc=inner):
                 stack.append((indent + extra, flat, inner))
-            case Align(doc=inner):
+            case _Align(doc=inner):
                 stack.append((column, flat, inner))
-            case Group(doc=inner):
+            case _Group(doc=inner):
                 fits = flat or _fits(width - column, (indent, True, inner), stack)
                 stack.append((indent, fits, inner))
-            case IfBroken(broken=broken, flat=flat_text):
+            case _IfBroken(broken=broken, flat=flat_text):
                 text = flat_text if flat else broken
                 out.append(text)
                 column += len(text)
-            case KeyValue(key=key, value=value, hang=hang):
+            case _KeyValue(key=key, value=value, hang=hang):
                 if flat or hang is None:
                     stack.append((indent, flat, value))
-                    stack.append((indent, flat, COLON_SPACE))
+                    stack.append((indent, flat, _COLON_SPACE))
                     stack.append((indent, flat, key))
-                elif isinstance(key, Text) or _fits(
-                    width - column, (indent, True, Concat((key, Text(":")))), []
+                elif isinstance(key, _Text) or _fits(
+                    width - column, (indent, True, _Concat((key, _Text(":")))), []
                 ):
                     stack.append((indent, False, value))
-                    stack.append((indent, False, COLON_SPACE))
+                    stack.append((indent, False, _COLON_SPACE))
                     stack.append((indent, True, key))
                 else:
                     hanging = column + hang
                     stack.append((hanging, False, value))
-                    stack.append((hanging, False, Line()))
-                    stack.append((indent, False, Text(":")))
+                    stack.append((hanging, False, _Line()))
+                    stack.append((indent, False, _Text(":")))
                     stack.append((indent, False, key))
-    yield EMPTY.join(out)
+    yield _EMPTY.join(out)
 
 
 def _fits(remaining, first, rest):
@@ -624,21 +658,21 @@ def _fits(remaining, first, rest):
             return True
 
         match node:
-            case Text(text=text):
+            case _Text(text=text):
                 remaining -= len(text)
-            case Line(flat=flat_text):
+            case _Line(flat=flat_text):
                 if flat:
                     remaining -= len(flat_text)
                 else:
                     return True
-            case Concat(parts=parts):
+            case _Concat(parts=parts):
                 local.extend((indent, flat, part) for part in reversed(parts))
-            case Nest(doc=inner) | Align(doc=inner) | Group(doc=inner):
+            case _Nest(doc=inner) | _Align(doc=inner) | _Group(doc=inner):
                 local.append((indent, flat, inner))
-            case IfBroken(broken=broken, flat=flat_text):
+            case _IfBroken(broken=broken, flat=flat_text):
                 remaining -= len(flat_text if flat else broken)
-            case KeyValue(key=key, value=value):
-                local.append((indent, flat, Concat((key, COLON_SPACE, value))))
+            case _KeyValue(key=key, value=value):
+                local.append((indent, flat, _Concat((key, _COLON_SPACE, value))))
     return False
 
 # End of printer formatting and rendering.
@@ -708,19 +742,14 @@ def _frozen_set_pprint(obj):
     yield from obj
 
 
-@dataclass(frozen=True)
-class _Literal:
-    text: str
-
-
 def _str_pprint(obj):
     yield DELEGATE
-    yield _Literal(repr(obj))
+    yield BreakableString(obj)
 
 
 def _bytes_pprint(obj):
     yield DELEGATE
-    yield _Literal(repr(obj))
+    yield BreakableBytes(obj)
 
 
 def _bytearray_pprint(obj):
