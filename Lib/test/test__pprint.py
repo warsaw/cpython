@@ -1,11 +1,27 @@
 import collections
 import types
 import unittest
+from typing import NamedTuple
 
 from _pprint import Printer, decompose
 
 
 class PprintProtocolTests(unittest.TestCase):
+    def test_namedtuple_descriptions(self):
+        Point = collections.namedtuple("Point", "x y")
+
+        class TypedPoint(NamedTuple):
+            x: int
+            y: int
+
+        points = (
+            (Point(1, 2), "Point(x=1, y=2)"),
+            (TypedPoint(1, 2), "TypedPoint(x=1, y=2)"),
+        )
+        for point, expected in points:
+            with self.subTest(type=type(point).__name__):
+                self.assertEqual(Printer()(point), expected)
+
     def test_builtin_and_collection_descriptions(self):
         class View(collections.abc.MappingView):
             __slots__ = ()

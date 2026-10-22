@@ -477,6 +477,12 @@ def namedtuple(typename, field_names, *, rename=False, defaults=None, module=Non
         'Return a nicely formatted representation string'
         return self.__class__.__name__ + repr_fmt % self
 
+    def __pprint__(self):
+        from _pprint import KWARGS, Layout
+        yield Layout(name=self.__class__.__name__)
+        yield KWARGS
+        yield from zip(self._fields, self)
+
     def _asdict(self):
         'Return a new dict which maps field names to their values.'
         return _dict(_zip(self._fields, self))
@@ -491,6 +497,7 @@ def namedtuple(typename, field_names, *, rename=False, defaults=None, module=Non
         _make.__func__,
         _replace,
         __repr__,
+        __pprint__,
         _asdict,
         __getnewargs__,
     ):
@@ -508,6 +515,7 @@ def namedtuple(typename, field_names, *, rename=False, defaults=None, module=Non
         '__replace__': _replace,
         '_replace': _replace,
         '__repr__': __repr__,
+        '__pprint__': __pprint__,
         '_asdict': _asdict,
         '__getnewargs__': __getnewargs__,
         '__match_args__': field_names,
