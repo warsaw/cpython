@@ -347,14 +347,14 @@ leaf_marker_repr(PyObject *op)
     if (value == NULL) {
         return NULL;
     }
-    PyObject *qualname = PyObject_GetAttrString((PyObject *)Py_TYPE(op),
-                                                "__qualname__");
-    if (qualname == NULL) {
+    PyObject *name = PyObject_GetAttrString(
+        (PyObject *)Py_TYPE(op), "__name__");
+    if (name == NULL) {
         Py_DECREF(value);
         return NULL;
     }
-    PyObject *result = PyUnicode_FromFormat("%U(%R)", qualname, value);
-    Py_DECREF(qualname);
+    PyObject *result = PyUnicode_FromFormat("%U(%R)", name, value);
+    Py_DECREF(name);
     Py_DECREF(value);
     return result;
 }

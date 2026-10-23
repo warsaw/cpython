@@ -1124,6 +1124,9 @@ def _load_protocol():
             open_ = layout.open
             close = _EMPTY if layout.close is None else layout.close
 
+        if layout.close is not None:
+            close = layout.close
+
         filled = Layout(
             hints=layout.hints,
             name=name,
@@ -1269,20 +1272,6 @@ def _load_protocol():
         hang: int | None
 
 
-    @dataclass(frozen=True)
-    class _Breakable:
-        """A str or bytes literal that the renderer may split across lines.
-
-        The split depends on the column where the literal starts, which is only
-        known while rendering.
-        """
-
-        value: object
-        top: bool
-        expand: bool
-        indent: int
-
-
     class _Marker:
         """A marker rendered by a function from the printer's marker table."""
 
@@ -1358,6 +1347,14 @@ def _load_protocol():
             sort_dicts=True,
             number_format=None,
         ):
+            indent = int(indent)
+            width = int(width)
+            if indent < 0:
+                raise ValueError('indent must be >= 0')
+            if depth is not None and depth <= 0:
+                raise ValueError('depth must be > 0')
+            if not width:
+                raise ValueError('width must be != 0')
             markers = {
                 BreakableString: self._render_literal,
                 BreakableBytes: self._render_literal,
@@ -1468,46 +1465,13 @@ def _load_protocol():
         return chunks
 
 
-    def _break_literal(node, column, width, allowance):
-        """Return the output lines for a literal that starts at *column*.
-
-        Every line after the first includes its leading spaces.
-        """
-        rep = repr(node.value)
-        if column + len(rep) + allowance <= width or len(node.value) == 0:
-            return [rep]
-        if node.top:
-            # The literal is the whole object, so it is parenthesized.
-            indent = column + (node.indent if node.expand else 1)
-            allowance += 1
-        else:
-            indent = column
-        if isinstance(node.value, bytes):
-            chunks = _wrap_bytes(node.value, width - indent, allowance)
-        else:
-            chunks = _wrap_string(node.value, width - indent, allowance)
-        if len(chunks) <= 1:
-            return [rep]
-
-        pad = _SPACE * indent
-        if not node.top:
-            return [chunks[0], *(pad + chunk for chunk in chunks[1:])]
-        if node.expand:
-            return ["(", *(pad + chunk for chunk in chunks), _SPACE * column + ")"]
-        return [
-            "(" + chunks[0],
-            *(pad + chunk for chunk in chunks[1:-1]),
-            pad + chunks[-1] + ")",
-        ]
-
-
-    def _format_number(value, number_format):
-        if number_format is None:
-            return repr(value)
-        try:
-            return format(value, number_format)
-        except Exception:
-            return repr(value)
+    def _find_marker(value, markers):
+        """Return the function in *markers* for *value*'s class, or None."""
+        for cls in type(value).__mro__:
+            render = markers.get(cls)
+            if render is not None:
+                return render
+        return None
 
 
     def _layout_document(document, level, options):
@@ -1519,17 +1483,11 @@ def _load_protocol():
                 )
             case _TextDocument(text=text):
                 return _Text(text)
-            case _BreakableStringDocument(value=value) | _BreakableBytesDocument(value=value):
-                return _Breakable(
-                    value,
-                    level == 0,
-                    options.expand is not Expand.NEVER,
-                    options.indent,
-                )
-            case _FormattableNumberDocument(value=value):
-                return _Text(_format_number(value, options.number_format))
             case _ValueDocument(value=value):
-                return _Text(repr(value))
+                render = _find_marker(value, options.markers)
+                if render is None:
+                    return _Text(repr(value))
+                return _Marker(value, render, level == 0)
             case _ContainerDocument(layout=header, items=items):
                 if not items:
                     return _Text(header.empty)
@@ -1556,12 +1514,6 @@ def _load_protocol():
     def _document_source(document):
         match document:
             case _ValueDocument(value=value):
-                return value
-            case _BreakableStringDocument(value=value):
-                return value
-            case _BreakableBytesDocument(value=value):
-                return value
-            case _FormattableNumberDocument(value=value):
                 return value
             case _ContainerDocument(source=value):
                 return value
@@ -1726,20 +1678,21 @@ def _load_protocol():
                     text = flat_text if flat else broken
                     out.append(text)
                     column += len(text)
-                case _Breakable(value=value):
+                case _Marker():
                     if flat:
-                        lines = [repr(value)]
+                        lines = node.flat()
                     else:
-                        lines = _break_literal(
-                            node, column, width, _trailing_width(stack)
-                        )
-                    out.append(lines[0])
-                    column += len(lines[0])
-                    for line in lines[1:]:
-                        yield _EMPTY.join(out)
-                        out.clear()
+                        room = width - column
+                        lines = node.lines(room, room - _trailing_width(stack))
+                    start = column
+                    for index, line in enumerate(lines):
+                        if index > 0:
+                            yield _EMPTY.join(out)
+                            out.clear()
+                            line = _SPACE * start + line
+                            column = 0
                         out.append(line)
-                        column = len(line)
+                        column += len(line)
                 case _KeyValue(key=key, value=value, hang=hang):
                     if flat or hang is None:
                         stack.append((indent, flat, value))
@@ -1788,11 +1741,17 @@ def _load_protocol():
                     remaining -= len(flat_text if flat else broken)
                 case _KeyValue(key=key, value=value):
                     local.append((indent, flat, _Concat((key, _COLON_SPACE, value))))
-                case _Breakable(value=value):
-                    if not flat:
-                        # It can break, so the rest goes on later lines.
-                        return True
-                    remaining -= len(repr(value))
+                case _Marker():
+                    if flat:
+                        lines = node.flat()
+                        if len(lines) != 1:
+                            return False
+                    else:
+                        lines = node.lines(remaining, remaining)
+                    remaining -= len(lines[0])
+                    if len(lines) > 1:
+                        # The rest of the marker goes on later lines.
+                        return remaining >= 0
         return False
 
 

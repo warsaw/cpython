@@ -27,6 +27,32 @@ def pformat(obj, **options):
 
 
 class PprintProtocolTests(unittest.TestCase):
+    def test_invalid_printer_options(self):
+        for options in ({"indent": -1}, {"width": 0}, {"depth": 0}, {"depth": -1}):
+            with self.subTest(options=options):
+                with self.assertRaises(ValueError):
+                    Printer(**options)
+
+    def test_printer_normalizes_width_and_indent(self):
+        self.assertEqual(
+            pformat([1, 2], width="5", indent="2"),
+            "[\n  1,\n  2,\n]",
+        )
+
+    def test_close_without_open(self):
+        class Custom:
+            def __pprint__(self):
+                yield Layout(close="]")
+                yield 1
+
+        layout, items = decompose(Custom())
+        self.assertEqual(layout.open, "Custom(")
+        self.assertEqual(layout.close, "]")
+        self.assertEqual(layout.empty, "Custom(]")
+        self.assertEqual(layout.single_close, "]")
+        self.assertEqual(items, [1])
+        self.assertEqual(pformat(Custom()), "Custom(1]")
+
     def test_namedtuple_descriptions(self):
         Point = collections.namedtuple("Point", "x y")
 
