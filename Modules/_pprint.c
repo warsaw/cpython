@@ -347,8 +347,8 @@ leaf_marker_repr(PyObject *op)
     if (value == NULL) {
         return NULL;
     }
-    PyObject *name = PyObject_GetAttrString((PyObject *)Py_TYPE(op),
-                                                "__name__");
+    PyObject *name = PyObject_GetAttrString(
+        (PyObject *)Py_TYPE(op), "__name__");
     if (name == NULL) {
         Py_DECREF(value);
         return NULL;
