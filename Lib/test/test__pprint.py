@@ -1,9 +1,10 @@
 import collections
 import types
 import unittest
+from dataclasses import dataclass
 from typing import NamedTuple
 
-from _pprint import Printer, decompose
+from _pprint import KWARGS, Layout, Printer, decompose
 
 
 class PprintProtocolTests(unittest.TestCase):
@@ -71,6 +72,33 @@ class PprintProtocolTests(unittest.TestCase):
         obj = {"first": [1, 2, 3], "second": [4, 5, 6]}
         lines = printer(obj)
         self.assertEqual("\n".join(lines), "\n".join(printer(obj)))
+
+    def test_layout_hints(self):
+        default_hints = Layout().hints
+        self.assertEqual(default_hints, {})
+        with self.assertRaises(TypeError):
+            default_hints["html.role"] = "table"
+
+        hints = {"html.role": "table"}
+
+        @dataclass
+        class Table:
+            headers: list[str]
+            rows: list[list[object]]
+
+            def __pprint__(self):
+                yield Layout(hints=hints)
+                yield KWARGS
+                yield "headers", self.headers
+                yield "rows", self.rows
+
+        table = Table(["Bass", "Strings"], [["Precision", 4], ["Stingray", 5]])
+        layout, _ = decompose(table)
+        self.assertIs(layout.hints, hints)
+        self.assertEqual(
+            "\n".join(Printer()(table)),
+            "Table(headers=['Bass', 'Strings'], rows=[['Precision', 4], ['Stingray', 5]])",
+        )
 
 
 if __name__ == "__main__":

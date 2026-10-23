@@ -15,8 +15,8 @@ import collections as _collections
 import sys
 import types as _types
 
-from collections.abc import Set
-from dataclasses import dataclass
+from collections.abc import Mapping, Set
+from dataclasses import dataclass, field
 from itertools import chain
 from string.templatelib import Interpolation as _Interpolation
 from string.templatelib import Template as _Template
@@ -40,8 +40,14 @@ _MISSING = sentinel("_MISSING")
 
 @dataclass(frozen=True, kw_only=True)
 class Layout:
-    """Describe an object's brackets, separator, and recursion marker."""
+    """Describe an object's layout and carry printer-specific hints unchanged.
 
+    The default printer ignores *hints*.
+    """
+
+    hints: Mapping[str, object] = field(
+        default_factory=lambda: _types.MappingProxyType({})
+    )
     name: str | None = None
     open: str | None = None
     close: str | None = None
@@ -168,6 +174,7 @@ def decompose(obj):
         close = _EMPTY if layout.close is None else layout.close
 
     filled = Layout(
+        hints=layout.hints,
         name=name,
         open=open_,
         close=close,
