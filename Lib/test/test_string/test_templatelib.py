@@ -179,6 +179,10 @@ class TestFunctions(unittest.TestCase):
                 self.assertEqual(convert(obj, 's'), str(obj))
                 self.assertEqual(convert(obj, 'r'), repr(obj))
                 self.assertEqual(convert(obj, 'a'), ascii(obj))
+                self.assertEqual(convert(obj, 'p'), repr(obj))
+
+                printer = lambda value: iter((str(value), 'printed'))
+                self.assertEqual(convert(obj, 'p', printer), f'{obj}\nprinted')
 
                 # Invalid conversion specifier
                 with self.assertRaises(ValueError):

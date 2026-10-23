@@ -10902,15 +10902,23 @@
             PyObject *str_o = PyStackRef_AsPyObjectBorrow(str);
             int conversion = oparg >> 2;
             PyObject *format_o;
+            PyObject *printer_o = NULL;
             if (oparg & 1) {
-                format_o = PyStackRef_AsPyObjectBorrow(format[0]);
+                if (conversion == _Py_TSTRING_CONVERSION_PRETTY) {
+                    printer_o = PyStackRef_AsPyObjectBorrow(format[0]);
+                    format_o = &_Py_STR(empty);
+                }
+                else {
+                    format_o = PyStackRef_AsPyObjectBorrow(format[0]);
+                }
             }
             else {
                 format_o = &_Py_STR(empty);
             }
             _PyFrame_SetStackPointer(frame, stack_pointer);
             _PyFrame_StackPointerValidate(frame);
-            PyObject *interpolation_o = _PyInterpolation_Build(value_o, str_o, conversion, format_o);
+            PyObject *interpolation_o = _PyInterpolation_Build(
+                value_o, str_o, conversion, format_o, printer_o);
             _PyFrame_StackPointerInvalidate(frame);
             if (oparg & 1) {
                 stack_pointer += -(oparg & 1);

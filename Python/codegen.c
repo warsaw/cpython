@@ -4354,12 +4354,43 @@ codegen_interpolation(compiler *c, expr_ty e)
     /* BUILD_INTERPOLATION encodes the stack input count (2 or 3) in the low
        two bits and the conversion code in the next three bits. */
     int oparg = 2;
-    if (e->v.Interpolation.format_spec) {
+    int conversion = e->v.Interpolation.conversion;
+    expr_ty format_spec = e->v.Interpolation.format_spec;
+    if (conversion == 'p') {
+        /* !p accepts no format spec, an empty spec, or one plain embedded
+           expression as the printer, matching f-string !p. */
+        if (format_spec == NULL ||
+            (format_spec->kind == JoinedStr_kind &&
+             asdl_seq_LEN(format_spec->v.JoinedStr.values) == 0)) {
+            /* No printer expression. */
+        }
+        else if (format_spec->kind == JoinedStr_kind &&
+                 asdl_seq_LEN(format_spec->v.JoinedStr.values) == 1) {
+            expr_ty part = (expr_ty)asdl_seq_GET(format_spec->v.JoinedStr.values, 0);
+            /* A single plain replacement field is the printer object. */
+            if (part->kind == FormattedValue_kind &&
+                part->v.FormattedValue.conversion == -1 &&
+                part->v.FormattedValue.format_spec == NULL) {
+                oparg++;
+                VISIT(c, expr, part->v.FormattedValue.value);
+            }
+            else {
+                PyErr_SetString(PyExc_SyntaxError,
+                    "!p format specifier must be a single expression");
+                return ERROR;
+            }
+        }
+        else {
+            PyErr_SetString(PyExc_SyntaxError,
+                "!p format specifier must be a single expression");
+            return ERROR;
+        }
+    }
+    else if (format_spec) {
         oparg++;
-        VISIT(c, expr, e->v.Interpolation.format_spec);
+        VISIT(c, expr, format_spec);
     }
 
-    int conversion = e->v.Interpolation.conversion;
     if (conversion != -1) {
         switch (conversion) {
         case 's': oparg |= _Py_TSTRING_CONVERSION_STR << 2;    break;

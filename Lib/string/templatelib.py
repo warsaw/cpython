@@ -5,7 +5,7 @@ Template = type(t)
 Interpolation = type(t.interpolations[0])
 del t
 
-def convert(obj, /, conversion):
+def convert(obj, /, conversion, printer=None):
     """Convert *obj* using formatted string literal semantics."""
     if conversion is None:
         return obj
@@ -15,6 +15,12 @@ def convert(obj, /, conversion):
         return str(obj)
     if conversion == 'a':
         return ascii(obj)
+    if conversion == 'p':
+        from _pprint import Printer
+
+        if printer is None:
+            printer = Printer()
+        return '\n'.join(printer(obj))
     raise ValueError(f'invalid conversion specifier: {conversion}')
 
 def _template_unpickle(*args):

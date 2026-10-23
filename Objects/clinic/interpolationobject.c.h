@@ -11,7 +11,7 @@ preserve
 static PyObject *
 interpolation_new_impl(PyTypeObject *type, PyObject *value,
                        PyObject *expression, PyObject *conversion,
-                       PyObject *format_spec);
+                       PyObject *format_spec, PyObject *printer);
 
 static PyObject *
 interpolation_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
@@ -19,7 +19,7 @@ interpolation_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     PyObject *return_value = NULL;
     #if defined(Py_BUILD_CORE) && !defined(Py_BUILD_CORE_MODULE)
 
-    #define NUM_KEYWORDS 4
+    #define NUM_KEYWORDS 5
     static struct {
         PyGC_Head _this_is_not_used;
         PyObject_VAR_HEAD
@@ -28,7 +28,7 @@ interpolation_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     } _kwtuple = {
         .ob_base = PyVarObject_HEAD_INIT(&PyTuple_Type, NUM_KEYWORDS)
         .ob_hash = -1,
-        .ob_item = { &_Py_ID(value), &_Py_ID(expression), &_Py_ID(conversion), &_Py_ID(format_spec), },
+        .ob_item = { &_Py_ID(value), &_Py_ID(expression), &_Py_ID(conversion), &_Py_ID(format_spec), &_Py_ID(printer), },
     };
     #undef NUM_KEYWORDS
     #define KWTUPLE (&_kwtuple.ob_base.ob_base)
@@ -37,14 +37,14 @@ interpolation_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     #  define KWTUPLE NULL
     #endif  // !Py_BUILD_CORE
 
-    static const char * const _keywords[] = {"value", "expression", "conversion", "format_spec", NULL};
+    static const char * const _keywords[] = {"value", "expression", "conversion", "format_spec", "printer", NULL};
     static _PyArg_Parser _parser = {
         .keywords = _keywords,
         .fname = "Interpolation",
         .kwtuple = KWTUPLE,
     };
     #undef KWTUPLE
-    PyObject *argsbuf[4];
+    PyObject *argsbuf[5];
     PyObject * const *fastargs;
     Py_ssize_t nargs = PyTuple_GET_SIZE(args);
     Py_ssize_t noptargs = nargs + (kwargs ? PyDict_GET_SIZE(kwargs) : 0) - 1;
@@ -52,9 +52,10 @@ interpolation_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     PyObject *expression = &_Py_STR(empty);
     PyObject *conversion = Py_None;
     PyObject *format_spec = &_Py_STR(empty);
+    PyObject *printer = Py_None;
 
     fastargs = _PyArg_UnpackKeywords(_PyTuple_CAST(args)->ob_item, nargs, kwargs, NULL, &_parser,
-            /*minpos*/ 1, /*maxpos*/ 4, /*minkw*/ 0, /*varpos*/ 0, argsbuf);
+            /*minpos*/ 1, /*maxpos*/ 5, /*minkw*/ 0, /*varpos*/ 0, argsbuf);
     if (!fastargs) {
         goto exit;
     }
@@ -80,15 +81,21 @@ interpolation_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
             goto skip_optional_pos;
         }
     }
-    if (!PyUnicode_Check(fastargs[3])) {
-        _PyArg_BadArgument("Interpolation", "argument 'format_spec'", "str", fastargs[3]);
-        goto exit;
+    if (fastargs[3]) {
+        if (!PyUnicode_Check(fastargs[3])) {
+            _PyArg_BadArgument("Interpolation", "argument 'format_spec'", "str", fastargs[3]);
+            goto exit;
+        }
+        format_spec = fastargs[3];
+        if (!--noptargs) {
+            goto skip_optional_pos;
+        }
     }
-    format_spec = fastargs[3];
+    printer = fastargs[4];
 skip_optional_pos:
-    return_value = interpolation_new_impl(type, value, expression, conversion, format_spec);
+    return_value = interpolation_new_impl(type, value, expression, conversion, format_spec, printer);
 
 exit:
     return return_value;
 }
-/*[clinic end generated code: output=2391391e2d7708c0 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=134eef9f4158a872 input=a9049054013a1b77]*/

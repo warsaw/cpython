@@ -1,4 +1,4 @@
-from string.templatelib import Interpolation
+from string.templatelib import Interpolation, convert
 
 
 class TStringBaseCase:
@@ -43,24 +43,17 @@ class TStringBaseCase:
             self.assertInterpolationEqual(i, exp)
 
 
-def convert(value, conversion):
-    if conversion == "a":
-        return ascii(value)
-    elif conversion == "r":
-        return repr(value)
-    elif conversion == "s":
-        return str(value)
-    return value
-
-
 def fstring(template):
     parts = []
     for item in template:
         match item:
             case str() as s:
                 parts.append(s)
-            case Interpolation(value, _, conversion, format_spec):
-                value = convert(value, conversion)
-                value = format(value, format_spec)
+            case Interpolation(value, _, conversion, format_spec, printer):
+                if conversion == "p":
+                    value = convert(value, conversion, printer)
+                else:
+                    value = convert(value, conversion)
+                    value = format(value, format_spec)
                 parts.append(value)
     return "".join(parts)

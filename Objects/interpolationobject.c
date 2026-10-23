@@ -22,9 +22,10 @@ _conversion_converter(PyObject *arg, PyObject **conversion)
 
     Py_ssize_t len;
     const char *conv_str = PyUnicode_AsUTF8AndSize(arg, &len);
-    if (len != 1 || !(conv_str[0] == 'a' || conv_str[0] == 'r' || conv_str[0] == 's')) {
+    if (len != 1 || !(conv_str[0] == 'a' || conv_str[0] == 'r' ||
+                      conv_str[0] == 's' || conv_str[0] == 'p')) {
         PyErr_SetString(PyExc_ValueError,
-            "Interpolation() argument 'conversion' must be one of 's', 'a' or 'r'");
+            "Interpolation() argument 'conversion' must be one of 's', 'a', 'r' or 'p'");
         return 0;
     }
 
@@ -45,6 +46,7 @@ typedef struct {
     PyObject *expression;
     PyObject *conversion;
     PyObject *format_spec;
+    PyObject *printer;
 } interpolationobject;
 
 #define interpolationobject_CAST(op) \
@@ -58,14 +60,23 @@ Interpolation.__new__ as interpolation_new
     expression: object(subclass_of='&PyUnicode_Type', c_default='&_Py_STR(empty)') = ""
     conversion: object(converter='_conversion_converter') = None
     format_spec: object(subclass_of='&PyUnicode_Type', c_default='&_Py_STR(empty)') = ""
+    printer: object = None
 [clinic start generated code]*/
 
 static PyObject *
 interpolation_new_impl(PyTypeObject *type, PyObject *value,
                        PyObject *expression, PyObject *conversion,
-                       PyObject *format_spec)
-/*[clinic end generated code: output=6488e288765bc1a9 input=fc5c285c1dd23d36]*/
+                       PyObject *format_spec, PyObject *printer)
+/*[clinic end generated code: output=b3923de825060a48 input=41bc995477f1175e]*/
 {
+    if (printer != Py_None &&
+        (!PyUnicode_Check(conversion) ||
+         PyUnicode_CompareWithASCIIString(conversion, "p") != 0)) {
+        PyErr_SetString(PyExc_ValueError,
+                        "printer may only be provided with conversion 'p'");
+        return NULL;
+    }
+
     interpolationobject *self = PyObject_GC_New(interpolationobject, type);
     if (!self) {
         return NULL;
@@ -75,6 +86,7 @@ interpolation_new_impl(PyTypeObject *type, PyObject *value,
     self->expression = Py_NewRef(expression);
     self->conversion = Py_NewRef(conversion);
     self->format_spec = Py_NewRef(format_spec);
+    self->printer = Py_NewRef(printer);
     PyObject_GC_Track(self);
     return (PyObject *) self;
 }
@@ -95,6 +107,7 @@ interpolation_clear(PyObject *op)
     Py_CLEAR(self->expression);
     Py_CLEAR(self->conversion);
     Py_CLEAR(self->format_spec);
+    Py_CLEAR(self->printer);
     return 0;
 }
 
@@ -106,6 +119,7 @@ interpolation_traverse(PyObject *op, visitproc visit, void *arg)
     Py_VISIT(self->expression);
     Py_VISIT(self->conversion);
     Py_VISIT(self->format_spec);
+    Py_VISIT(self->printer);
     return 0;
 }
 
@@ -113,9 +127,16 @@ static PyObject *
 interpolation_repr(PyObject *op)
 {
     interpolationobject *self = interpolationobject_CAST(op);
-    return PyUnicode_FromFormat("%s(%R, %R, %R, %R)",
-                                _PyType_Name(Py_TYPE(self)), self->value, self->expression,
-                                self->conversion, self->format_spec);
+    if (self->printer == Py_None) {
+        return PyUnicode_FromFormat("%s(%R, %R, %R, %R)",
+                                    _PyType_Name(Py_TYPE(self)), self->value,
+                                    self->expression, self->conversion,
+                                    self->format_spec);
+    }
+    return PyUnicode_FromFormat("%s(%R, %R, %R, %R, printer=%R)",
+                                _PyType_Name(Py_TYPE(self)), self->value,
+                                self->expression, self->conversion,
+                                self->format_spec, self->printer);
 }
 
 static PyMemberDef interpolation_members[] = {
@@ -123,6 +144,7 @@ static PyMemberDef interpolation_members[] = {
     {"expression", Py_T_OBJECT_EX, offsetof(interpolationobject, expression), Py_READONLY, "Expression"},
     {"conversion", Py_T_OBJECT_EX, offsetof(interpolationobject, conversion), Py_READONLY, "Conversion"},
     {"format_spec", Py_T_OBJECT_EX, offsetof(interpolationobject, format_spec), Py_READONLY, "Format specifier"},
+    {"printer", Py_T_OBJECT_EX, offsetof(interpolationobject, printer), Py_READONLY, "Pretty printer"},
     {NULL}
 };
 
@@ -130,9 +152,9 @@ static PyObject*
 interpolation_reduce(PyObject *op, PyObject *Py_UNUSED(dummy))
 {
     interpolationobject *self = interpolationobject_CAST(op);
-    return Py_BuildValue("(O(OOOO))", (PyObject *)Py_TYPE(op),
+    return Py_BuildValue("(O(OOOOO))", (PyObject *)Py_TYPE(op),
                          self->value, self->expression,
-                         self->conversion, self->format_spec);
+                         self->conversion, self->format_spec, self->printer);
 }
 
 _PyObject_PPRINT_METHOD(_pprint_bridge_interpolation_pprint, "_interpolation_pprint")
@@ -168,7 +190,8 @@ PyTypeObject _PyInterpolation_Type = {
 PyStatus
 _PyInterpolation_InitTypes(PyInterpreterState *interp)
 {
-    PyObject *tuple = Py_BuildValue("(ssss)", "value", "expression", "conversion", "format_spec");
+    PyObject *tuple = Py_BuildValue("(sssss)", "value", "expression", "conversion",
+                                    "format_spec", "printer");
     if (!tuple) {
         goto error;
     }
@@ -191,7 +214,8 @@ error:
 }
 
 PyObject *
-_PyInterpolation_Build(PyObject *value, PyObject *str, int conversion, PyObject *format_spec)
+_PyInterpolation_Build(PyObject *value, PyObject *str, int conversion,
+                       PyObject *format_spec, PyObject *printer)
 {
     interpolationobject *interpolation = PyObject_GC_New(interpolationobject, &_PyInterpolation_Type);
     if (!interpolation) {
@@ -201,6 +225,7 @@ _PyInterpolation_Build(PyObject *value, PyObject *str, int conversion, PyObject 
     interpolation->value = Py_NewRef(value);
     interpolation->expression = Py_NewRef(str);
     interpolation->format_spec = Py_NewRef(format_spec);
+    interpolation->printer = Py_NewRef(printer != NULL ? printer : Py_None);
     interpolation->conversion = NULL;
 
     if (conversion == _Py_TSTRING_CONVERSION_NONE) {

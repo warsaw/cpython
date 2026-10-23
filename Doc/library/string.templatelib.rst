@@ -275,7 +275,7 @@ Types
       '1 + 2'
 
    .. attribute:: conversion
-      :type: typing.Literal['a', 'r', 's'] | None
+      :type: typing.Literal['a', 'r', 's', 'p'] | None
 
       The conversion to apply to the value, or ``None``.
 
@@ -284,6 +284,10 @@ Types
 
       >>> t'{1 + 2!a}'.interpolations[0].conversion
       'a'
+
+      The ``'p'`` conversion requests pretty printing. If its format specifier
+      contains one plain replacement field, that field's evaluated value is
+      available as the :attr:`!printer` attribute.
 
       .. note::
 
@@ -315,12 +319,25 @@ Types
          can be arbitrary strings,
          including those that do not conform to the :func:`format` protocol.
 
+   .. attribute:: printer
+      :type: object | None
+
+      The evaluated printer object for a ``'p'`` conversion, or ``None`` if no
+      printer was supplied. For ``'p'`` interpolations, the format specifier
+      must be empty or contain one plain replacement field; that field is
+      stored here, and :attr:`!format_spec` is the empty string.
+
+      >>> printer = lambda value: (f'pretty({value})',)
+      >>> t'{42!p:{printer}}'.interpolations[0].printer is printer
+      True
+
    .. rubric:: Methods
 
    .. method:: __new__(value: object, \
                        expression: str, \
-                       conversion: typing.Literal['a', 'r', 's'] | None = None, \
-                       format_spec: str = '')
+                       conversion: typing.Literal['a', 'r', 's', 'p'] | None = None, \
+                       format_spec: str = '', \
+                       printer: object = None)
 
       Create a new :class:`!Interpolation` object from component parts.
 
@@ -328,24 +345,25 @@ Types
       :param expression: The text of a valid Python expression,
            or an empty string.
       :param conversion: The :ref:`conversion <formatstrings>` to be used,
-           one of ``None``, ``'a'``, ``'r'``, or ``'s'``.
+           one of ``None``, ``'a'``, ``'r'``, ``'s'``, or ``'p'``.
       :param format_spec: An optional, arbitrary string used as the
            :ref:`format specification <formatspec>` to present the value.
+      :param printer: An optional printer object, accepted only with the
+           ``'p'`` conversion.
 
 
 Helper functions
 ----------------
 
-.. function:: convert(obj, /, conversion)
+.. function:: convert(obj, /, conversion, printer=None)
 
    Applies formatted string literal :ref:`conversion <formatstrings-conversion>`
    semantics to the given object *obj*.
    This is frequently useful for custom template string processing logic.
 
-   Three conversion flags are currently supported:
-
-   * ``'s'`` which calls :func:`str` on the value (like ``!s``),
-   * ``'r'`` which calls :func:`repr` (like ``!r``), and
-   * ``'a'`` which calls :func:`ascii` (like ``!a``).
+   The ``'s'``, ``'r'``, and ``'a'`` conversion flags call :func:`str`,
+   :func:`repr`, and :func:`ascii`, respectively. The ``'p'`` conversion
+   pretty-prints *obj* using the default printer, or the optional *printer*
+   if supplied, and joins its output lines with newlines.
 
    If the conversion flag is ``None``, *obj* is returned unchanged.

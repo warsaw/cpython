@@ -193,7 +193,6 @@ _PyStaticObjects_CheckAll(PyInterpreterState *interp) {
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(__path__), "__path__", 8);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(__pos__), "__pos__", 7);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(__pow__), "__pow__", 7);
-    _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(__pprint__), "__pprint__", 10);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(__prepare__), "__prepare__", 11);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(__qualname__), "__qualname__", 12);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(__radd__), "__radd__", 8);
@@ -732,6 +731,7 @@ _PyStaticObjects_CheckAll(PyInterpreterState *interp) {
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(prec), "prec", 4);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(preserve_exc), "preserve_exc", 12);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(print_file_and_line), "print_file_and_line", 19);
+    _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(printer), "printer", 7);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(priority), "priority", 8);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(progress), "progress", 8);
     _PyStaticObject_CheckUnicodeSingleton((PyObject *)&_Py_ID(progress_callback), "progress_callback", 17);

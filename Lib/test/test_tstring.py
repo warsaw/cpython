@@ -1,4 +1,5 @@
 import unittest
+from string.templatelib import Interpolation, convert
 
 from test import support
 from test.support.os_helper import temp_cwd
@@ -141,6 +142,50 @@ class TestTString(unittest.TestCase, TStringBaseCase):
         t = t"ASCII: {text!a}"
         self.assertTStringEqual(t, ("ASCII: ", ""), [(text, "text", "a")])
         self.assertEqual(fstring(t), f"ASCII: {ascii(text)}")
+
+        # !p retains a printer expression instead of stringifying it as a spec.
+        t = t"Pretty: {obj!p}"
+        interpolation = t.interpolations[0]
+        self.assertEqual(interpolation.conversion, "p")
+        self.assertIsNone(interpolation.printer)
+        self.assertEqual(interpolation.format_spec, "")
+        self.assertEqual(fstring(t), f"Pretty: {obj!r}")
+
+        t = t"Pretty: {obj!p:}"
+        self.assertIsNone(t.interpolations[0].printer)
+        self.assertEqual(fstring(t), f"Pretty: {obj!r}")
+
+        def printer(value):
+            return iter((f"custom {value}", "printed"))
+
+        t = t"Pretty: {obj!p:{printer}}"
+        interpolation = t.interpolations[0]
+        self.assertEqual(interpolation.conversion, "p")
+        self.assertIs(interpolation.printer, printer)
+        self.assertEqual(interpolation.format_spec, "")
+        self.assertEqual(convert(obj, "p", printer), f"custom {obj}\nprinted")
+        self.assertEqual(fstring(t), f"Pretty: custom {obj}\nprinted")
+
+        printer = "not callable"
+        t = t"{obj!p:{printer}}"
+        self.assertEqual(t.interpolations[0].printer, printer)
+        with self.assertRaisesRegex(TypeError, "not callable"):
+            convert(obj, "p", printer)
+
+        self.assertEqual(Interpolation(obj, "obj", "p").conversion, "p")
+        self.assertIs(Interpolation(obj, "obj", "p", "", printer).printer, printer)
+        with self.assertRaisesRegex(ValueError, "'s', 'a', 'r' or 'p'"):
+            Interpolation(obj, "obj", "z")
+
+        # The !p specifier must be empty or a single plain embedded expression.
+        for source in (
+            "t'{obj!p:literal}'",
+            "t'{obj!p:{printer!s}}'",
+            "t'{obj!p:{printer}{obj}}'",
+            "t'{obj!p:{printer:{obj}}}'",
+        ):
+            with self.subTest(source=source), self.assertRaises(SyntaxError):
+                eval(source)
 
         # Test !z conversion (error)
         num = 1

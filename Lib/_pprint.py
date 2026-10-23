@@ -1002,6 +1002,9 @@ def _interpolation_pprint(obj):
     yield obj.expression
     yield obj.conversion
     yield obj.format_spec
+    if obj.printer is not None:
+        yield KWARGS
+        yield "printer", obj.printer
 
 
 # End of __pprint__ implementations.
