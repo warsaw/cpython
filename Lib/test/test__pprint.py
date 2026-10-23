@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from string.templatelib import Interpolation
 from typing import NamedTuple
 
-from _pprint import (
+from pprint import (
     DELEGATE,
     KWARGS,
     LEAF,
@@ -145,7 +145,11 @@ class LeafTests(unittest.TestCase):
 
 class PublicNamesTests(unittest.TestCase):
     def test_reexported_from_pprint(self):
-        for name in pprint._PROTOCOL_NAMES:
+        c_names = (
+            "VALUES", "KWARGS", "ITEMS", "DELEGATE", "Layout",
+            "BreakableString", "BreakableBytes", "FormattableNumber",
+        )
+        for name in c_names:
             with self.subTest(name=name):
                 self.assertIn(name, pprint.__all__)
                 self.assertIs(getattr(pprint, name), getattr(_pprint, name))

@@ -283,7 +283,7 @@ class OrderedDict(dict):
         return '%s(%r)' % (self.__class__.__name__, dict(self.items()))
 
     def __pprint__(self):
-        from _pprint import _ordered_dict_pprint
+        from pprint import _ordered_dict_pprint
         return _ordered_dict_pprint(self)
 
     def __reduce__(self):
@@ -478,7 +478,7 @@ def namedtuple(typename, field_names, *, rename=False, defaults=None, module=Non
         return self.__class__.__name__ + repr_fmt % self
 
     def __pprint__(self):
-        from _pprint import KWARGS, Layout
+        from pprint import KWARGS, Layout
         yield Layout(name=self.__class__.__name__)
         yield KWARGS
         yield from zip(self._fields, self)
@@ -771,7 +771,7 @@ class Counter(dict):
         return f'{self.__class__.__name__}({d!r})'
 
     def __pprint__(self):
-        from _pprint import _counter_pprint
+        from pprint import _counter_pprint
         return _counter_pprint(self)
 
     # Multiset-style mathematical operations discussed in:
@@ -1111,7 +1111,7 @@ class ChainMap(_collections_abc.MutableMapping):
         return f'{self.__class__.__name__}({", ".join(map(repr, self.maps))})'
 
     def __pprint__(self):
-        from _pprint import _chainmap_pprint
+        from pprint import _chainmap_pprint
         return _chainmap_pprint(self)
 
     @classmethod
@@ -1237,7 +1237,7 @@ class UserDict(_collections_abc.MutableMapping):
         return repr(self.data)
 
     def __pprint__(self):
-        from _pprint import _user_container_pprint
+        from pprint import _user_container_pprint
         return _user_container_pprint(self)
 
     def __or__(self, other):
@@ -1324,7 +1324,7 @@ class UserList(_collections_abc.MutableSequence):
         return repr(self.data)
 
     def __pprint__(self):
-        from _pprint import _user_container_pprint
+        from pprint import _user_container_pprint
         return _user_container_pprint(self)
 
     def __lt__(self, other):
@@ -1460,7 +1460,7 @@ class UserString(_collections_abc.Sequence):
         return repr(self.data)
 
     def __pprint__(self):
-        from _pprint import _user_container_pprint
+        from pprint import _user_container_pprint
         return _user_container_pprint(self)
 
     def __int__(self):

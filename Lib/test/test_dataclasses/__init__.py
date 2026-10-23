@@ -2696,7 +2696,7 @@ class TestRepr(unittest.TestCase):
         self.assertEqual(repr(C.E()), 'TestRepr.test_repr.<locals>.C.E()')
 
     def test_pprint(self):
-        from _pprint import Printer
+        from pprint import Printer
 
         @dataclass
         class C:
@@ -2724,7 +2724,7 @@ class TestRepr(unittest.TestCase):
         # A hand-written __repr__() may show something other than the fields,
         # such as a field with a secret value.  A generated __pprint__() would
         # take precedence over it, so none is generated.
-        from _pprint import Printer
+        from pprint import Printer
 
         @dataclass
         class C:

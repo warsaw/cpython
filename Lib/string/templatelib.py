@@ -16,8 +16,6 @@ def convert(obj, /, conversion, printer=None):
     if conversion == 'a':
         return ascii(obj)
     if conversion == 'p':
-        # Use the same path as an f-string, so that the printer's result is
-        # checked and joined the same way.
         if printer is None:
             return f'{obj!p}'
         return f'{obj!p:{printer}}'

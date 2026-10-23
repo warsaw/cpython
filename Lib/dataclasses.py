@@ -922,7 +922,7 @@ def _set_new_attribute(cls, name, value):
 
 
 def _dataclass_pprint(obj, field_names):
-    from _pprint import KWARGS, Layout
+    from pprint import KWARGS, Layout
 
     yield Layout(name=obj.__class__.__qualname__)
     yield KWARGS
