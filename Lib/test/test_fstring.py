@@ -1463,9 +1463,9 @@ except Exception:
                 raise AssertionError("printer object was converted to str")
 
             def __call__(self, obj):
-                return f'printed {obj}'
+                return iter(('printed', str(obj)))
 
-        self.assertEqual(f'{1!p:{Printer()}}', 'printed 1')
+        self.assertEqual(f'{1!p:{Printer()}}', 'printed\n1')
 
         # Conversions can have trailing whitespace after them since it
         # does not provide any significance

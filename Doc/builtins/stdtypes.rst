@@ -3242,14 +3242,14 @@ Each replacement field must contain an expression, optionally followed by:
 See the :ref:`Lexical Analysis section on f-strings <f-strings>` for details
 on the syntax of these fields.
 
-The ``!p`` conversion calls :c:func:`PyObject_Pretty`. Its format specifier is
-passed as the ``printer`` argument without converting a replacement field to a
-string. The format specifier must be a single replacement field whose value is
-callable. If it is omitted or empty, ``NULL`` is passed as the printer argument
-to :c:func:`PyObject_Pretty`, which uses a default printer that calls
-``__pprint__()`` when available and interprets its iterable as a description
-of the object's layout and contents. If the method is absent, the default
-printer falls back to :func:`repr`.
+The ``!p`` conversion calls a printer with the value and joins the strings it
+returns with newlines. Its format specifier is passed as the printer without
+converting a replacement field to a string. The format specifier must be a
+single replacement field whose value is callable. If it is omitted or empty,
+a default printer is used. The default printer calls ``__pprint__()`` when
+available and interprets its iterable as a description of the object's layout
+and contents. If the method is absent, the default printer falls back to
+:func:`repr`.
 
 Debug specifier
 ^^^^^^^^^^^^^^^

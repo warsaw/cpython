@@ -1205,6 +1205,7 @@ class MappingProxyTests(unittest.TestCase):
              '__iter__',
              '__len__',
              '__or__',
+             '__pprint__',
              '__reversed__',
              '__ror__',
              'copy',

@@ -20,7 +20,7 @@ class PprintProtocolTests(unittest.TestCase):
         )
         for point, expected in points:
             with self.subTest(type=type(point).__name__):
-                self.assertEqual(Printer()(point), expected)
+                self.assertEqual("\n".join(Printer()(point)), expected)
 
     def test_builtin_and_collection_descriptions(self):
         class View(collections.abc.MappingView):
@@ -59,18 +59,18 @@ class PprintProtocolTests(unittest.TestCase):
             with self.subTest(type=type(obj).__name__):
                 self.assertTrue(callable(getattr(type(obj), "__pprint__", None)))
                 self.assertIsNotNone(decompose(obj)[0])
-                self.assertIsInstance(Printer()(obj), str)
+                self.assertIsInstance("\n".join(Printer()(obj)), str)
 
     def test_string_and_bytes_wrap(self):
         text = "one two three four five six seven eight nine ten eleven twelve"
-        self.assertIn("\n", Printer(width=20)(text))
-        self.assertTrue(Printer()(b"some bytes").startswith("("))
+        self.assertIn("\n", "\n".join(Printer(width=20)(text)))
+        self.assertTrue("\n".join(Printer()(b"some bytes")).startswith("("))
 
-    def test_printer_lines(self):
+    def test_printer_call_yields_lines(self):
         printer = Printer(width=20)
         obj = {"first": [1, 2, 3], "second": [4, 5, 6]}
-        lines = printer.formatted_lines(obj)
-        self.assertEqual("\n".join(lines), printer(obj))
+        lines = printer(obj)
+        self.assertEqual("\n".join(lines), "\n".join(printer(obj)))
 
 
 if __name__ == "__main__":

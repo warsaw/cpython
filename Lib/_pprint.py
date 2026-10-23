@@ -363,7 +363,7 @@ class _FormatOptions:
 
 
 class Printer:
-    """Default printer. Instances are callable as printer(obj)."""
+    """Default printer. Calling an instance yields the formatted lines."""
 
     def __init__(
         self,
@@ -380,9 +380,6 @@ class Printer:
         )
 
     def __call__(self, obj):
-        return _NL.join(self.formatted_lines(obj))
-
-    def formatted_lines(self, obj):
         """Yield the formatted lines for *obj*."""
         # Build the complete structural document before applying printer settings.
         document = _build_document(obj)

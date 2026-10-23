@@ -2706,7 +2706,8 @@ class TestRepr(unittest.TestCase):
 
         obj = C(1, 'value', object())
         self.assertIn('__pprint__', C.__dict__)
-        self.assertEqual(Printer()(obj), f"{C.__qualname__}(visible=1, also_visible='value')")
+        self.assertEqual("\n".join(Printer()(obj)),
+                         f"{C.__qualname__}(visible=1, also_visible='value')")
 
     def test_pprint_not_generated_if_defined(self):
         def custom_pprint(self):

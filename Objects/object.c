@@ -841,7 +841,7 @@ PyObject_Str(PyObject *v)
 }
 
 PyObject *
-PyObject_Pretty(PyObject *v, PyObject *printer)
+_PyObject_Pretty(PyObject *v, PyObject *printer)
 {
     PyObject *default_printer = NULL;
     if (printer == NULL) {
@@ -863,7 +863,12 @@ PyObject_Pretty(PyObject *v, PyObject *printer)
     }
     PyObject *result = PyObject_CallOneArg(printer, v);
     Py_XDECREF(default_printer);
-    return result;
+    if (result == NULL) {
+        return NULL;
+    }
+    PyObject *iterator = PyObject_GetIter(result);
+    Py_DECREF(result);
+    return iterator;
 }
 
 PyObject *

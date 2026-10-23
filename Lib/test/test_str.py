@@ -1280,6 +1280,8 @@ class StrTest(string_tests.StringLikeTest,
         self.assertEqual('{0!a}'.format(F('\u0374')), 'F(\\u0374)')
         self.assertEqual('{0!p}'.format([1, 2]), '[1, 2]')
         self.assertEqual('{0!p:}'.format([1, 2]), '[1, 2]')
+        wide_pretty = '{0!p}'.format({key: [1, 2] for key in range(20)})
+        self.assertIn('\n', wide_pretty)
 
         class Pretty:
             def __pprint__(self):
