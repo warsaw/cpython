@@ -104,7 +104,7 @@ library types, :func:`dataclasses.dataclass` classes and
 
 See :ref:`pprint-protocol` and :pep:`813` for details.
 
-(Contributed by Eric V. Smith and Barry Warsaw.)
+(Contributed by Eric V. Smith and Barry Warsaw in :gh:`145153`.)
 
 
 
@@ -1072,7 +1072,8 @@ New deprecations
 
   * :class:`pprint.PrettyPrinter` is now :term:`soft deprecated`.  It is not
     scheduled for removal, but no new features will be added to it.  Use
-    :class:`pprint.Printer` instead.  (:pep:`813`.)
+    :class:`pprint.Printer` instead.
+    (Contributed by Barry Warsaw and Eric V. Smith in :gh:`145153`.)
 
 * :mod:`abc`:
 
@@ -1249,7 +1250,7 @@ New features
 
 * Add :c:func:`PyObject_Pretty` to the limited C API, the function behind the
   new ``!p`` conversion.  See :pep:`813`.
-  (Contributed by Eric V. Smith.)
+  (Contributed by Eric V. Smith in :gh:`145153`.)
 
 Porting to Python 3.16
 ----------------------
